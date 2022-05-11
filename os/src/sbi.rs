@@ -1,6 +1,6 @@
 #![allow(unused)]
 /// RustSBI支持的服务类型常量
-const SBI_SET_TIMER:usize = 0;
+const SBI_SET_TIMER: usize = 0;
 const SBI_CONSOLE_PUTCHAR: usize = 1;
 const SBI_CONSOLE_GETCHAR: usize = 2;
 const SBI_CLEAR_IPI: usize = 3;
@@ -27,6 +27,7 @@ pub fn console_putchar(c: usize) {
 #[inline(always)]
 fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
     let mut ret;
+    // 此处由S模式陷入到M模式,并调用SBI提供的二进制汇编机器码接口
     unsafe {
         asm!(
             "ecall",
