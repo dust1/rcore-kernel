@@ -2,11 +2,15 @@ use core::arch::asm;
 
 use lazy_static::*;
 
-use crate::{println, sync::up::UPSafeCell, trap::context::TrapContext};
+use crate::{
+    config::{APP_BASE_ADDRESS, APP_SIZE_LIMIT},
+    loader::load_apps,
+    println,
+    sync::up::UPSafeCell,
+    trap::context::TrapContext,
+};
 
 const MAX_APP_NUM: usize = 16;
-const APP_BASE_ADDRESS: usize = 0x80400000;
-const APP_SIZE_LIMIT: usize = 0x20000;
 
 /// 两个常数分别指出内核栈和用户栈的大小为8KB
 /// 根据程序的布局，这两个常数以全局变量的形式实例化在.bss段中
@@ -20,8 +24,6 @@ struct AppManager {
     num_app: usize,
     // 当前执行的是第几个应用
     current_app: usize,
-    // 各个app的起始地址
-    app_start: [usize; MAX_APP_NUM + 1],
 }
 
 /// 内核栈
@@ -71,47 +73,19 @@ impl UserStack {
 impl AppManager {
     pub fn print_app_info(&self) {
         println!("[kernel] num_app = {}", self.num_app);
-        for i in 0..self.num_app {
-            println!(
-                "[kernel] app_{} [{:#x}, {:#x})",
-                i,
-                self.app_start[i],
-                self.app_start[i + 1]
-            );
-        }
     }
 
-    /// 返回当前运行的appid
-    pub fn get_current_app(&self) -> usize {
-        self.current_app
+    /// 返回当前运行的appid的地址
+    pub fn get_current_app_addr(&self) -> usize {
+        if self.current_app >= self.num_app {
+            panic!("All application completed!!")
+        }
+        APP_BASE_ADDRESS + self.current_app * APP_SIZE_LIMIT
     }
 
     /// 移动到下一个运行的appid
     pub fn move_to_next_app(&mut self) {
         self.current_app += 1;
-    }
-
-    /// 根据appid加载应用程序
-    unsafe fn load_app(&self, app_id: usize) {
-        if app_id >= self.num_app {
-            panic!("all application completed")
-        }
-
-        println!("[kernel] Loading app_{}", app_id);
-        // 清除指令缓存(i-cache)
-        asm!("fence.i");
-
-        // 清理内存
-        core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, APP_SIZE_LIMIT).fill(0);
-        let app_src = core::slice::from_raw_parts(
-            self.app_start[app_id] as *const u8,
-            self.app_start[app_id + 1] - self.app_start[app_id],
-        );
-
-        // 将app_id所在的内存块复制到APP_BASE_ADDRESS开头的内存部分
-        // 这部分内存块就是app的代码
-        let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
-        app_dst.copy_from_slice(app_src);
     }
 }
 
@@ -127,10 +101,9 @@ pub fn print_app_info() {
 
 pub fn run_next_app() -> ! {
     let mut app_manager = APP_MANAGER.exclusive_access();
-    let current_app = app_manager.get_current_app();
-    unsafe {
-        app_manager.load_app(current_app);
-    }
+
+    let current_addr = app_manager.get_current_app_addr();
+    println!("[kernel] next app addr {:#x}", current_addr);
     app_manager.move_to_next_app();
     drop(app_manager);
 
@@ -142,7 +115,7 @@ pub fn run_next_app() -> ! {
     // 其 sepc 是应用程序入口地址 0x80400000 ，其 sp 寄存器指向用户栈，其 sstatus 的 SPP 字段被设置为 User
     unsafe {
         __restore(KERNEL_STACK.push_context(TrapContext::app_init_context(
-            APP_BASE_ADDRESS,
+            current_addr,
             USER_STACK.get_sp(),
         )) as *const _ as usize);
     }
@@ -159,10 +132,9 @@ lazy_static! {
             // 根据起始符号解析出应用的数量以及各个起始地址
             let num_app_ptr = _num_app as usize as *const usize;
             let num_app = num_app_ptr.read_volatile();
-            let mut app_start:[usize; MAX_APP_NUM + 1] = [0; MAX_APP_NUM + 1];
-            let app_start_raw:&[usize] = core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1);
-            app_start[..=num_app].copy_from_slice(app_start_raw);
-            AppManager { num_app, current_app: 0, app_start }
+
+            load_apps();
+            AppManager { num_app, current_app: 0}
         })
     };
 }

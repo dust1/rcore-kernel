@@ -3,7 +3,9 @@
 #![feature(panic_info_message)]
 
 mod batch;
+mod config;
 mod lang_items;
+mod loader;
 mod sbi;
 mod sync;
 mod syscall;
@@ -23,6 +25,7 @@ global_asm!(include_str!("link_app.S"));
 pub fn rust_main() -> ! {
     clear_bss();
     println!("Hello World!!");
+    // S模式运行
     trap::init();
     batch::init();
     batch::run_next_app();

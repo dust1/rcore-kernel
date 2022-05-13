@@ -12,8 +12,8 @@ use self::context::TrapContext;
 
 pub mod context;
 
-/// trap 的上下文保存与恢复
-/// __alltraps的实现
+// trap 的上下文保存与恢复
+// __alltraps的实现
 global_asm!(include_str!("trap.S"));
 
 pub fn init() {
