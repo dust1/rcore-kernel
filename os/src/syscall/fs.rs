@@ -1,4 +1,4 @@
-use crate::{batch::run_next_app, print, println};
+use crate::{print, println};
 
 const FD_STDOUT: usize = 1;
 
@@ -14,9 +14,4 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
             panic!("Unsupported fd in sys_write!")
         }
     }
-}
-
-pub fn sys_exit(xstate: i32) -> ! {
-    println!("[kernel] Application exited with code {}", xstate);
-    run_next_app()
 }

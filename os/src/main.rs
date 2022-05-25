@@ -2,13 +2,13 @@
 #![no_main]
 #![feature(panic_info_message)]
 
-mod batch;
 mod config;
 mod lang_items;
 mod loader;
 mod sbi;
 mod sync;
 mod syscall;
+mod task;
 mod trap;
 
 #[macro_use]
@@ -27,8 +27,11 @@ pub fn rust_main() -> ! {
     println!("Hello World!!");
     // S模式运行
     trap::init();
-    batch::init();
-    batch::run_next_app();
+    loader::load_apps();
+    task::run_first_app();
+    panic!("Unreachable in rust_main!")
+    // batch::init();
+    // batch::run_next_app();
 }
 
 fn clear_bss() {

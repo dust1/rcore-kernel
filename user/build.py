@@ -7,6 +7,8 @@ linker = 'src/linker.ld'
 app_id = 0
 apps = os.listdir('src/bin')
 apps.sort()
+
+os.system('cargo clean')
 for app in apps:
     app = app[:app.find('.')]
     lines = []

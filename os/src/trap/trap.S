@@ -10,6 +10,7 @@
     .globl __restore
     # 将__alltraps地址4字节对齐
     .align 2
+    # 这个符号的执行位于S模式下,因此后续调用的trap_handler也是在S模式下
 __alltraps:
     # 在这之前sp指向用户栈,sscratch指向内核栈.现在两者互换
     csrrw sp, sscratch, sp
@@ -44,7 +45,7 @@ __alltraps:
 __restore:
     # case1: start running app by __restore
     # case2: back to U after handling trap
-    mv sp, a0
+    # mv sp, a0
     # now sp->kernel stack(after allocated), sscratch->user stack
     # restore sstatus/sepc
     # 负责从内核栈栈顶的trap上下文中恢复通用寄存器和CSR
