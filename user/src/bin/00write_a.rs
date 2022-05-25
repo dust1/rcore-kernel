@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate user_lib;
 
-use user_lib::yield_;
+use user_lib::{get_time, yield_};
 
 const WIDTH: usize = 10;
 const HEIGHT: usize = 5;
@@ -16,8 +16,9 @@ fn main() -> i32 {
             print!("A");
         }
         println!(" [{}/{}]", i + 1, HEIGHT);
-        yield_();
+        // yield_();
     }
+    println!("[app A] get time : {}", get_time());
     println!("Test write_a OK!");
     0
 }

@@ -9,6 +9,7 @@ mod sbi;
 mod sync;
 mod syscall;
 mod task;
+mod timer;
 mod trap;
 
 #[macro_use]
@@ -28,6 +29,9 @@ pub fn rust_main() -> ! {
     // S模式运行
     trap::init();
     loader::load_apps();
+    trap::enable_timer_interrupt();
+    // 设置第一个10ms计时器
+    timer::set_next_trigger();
     task::run_first_app();
     panic!("Unreachable in rust_main!")
     // batch::init();

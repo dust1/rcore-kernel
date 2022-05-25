@@ -1,12 +1,14 @@
 use core::arch::global_asm;
 
 use riscv::register::{
-    scause::{self, Exception, Trap},
-    stval, stvec,
+    scause::{self, Exception, Interrupt, Trap},
+    sie, stval, stvec,
     utvec::TrapMode,
 };
 
-use crate::{println, syscall::syscall};
+use crate::{
+    println, syscall::syscall, task::suspend_current_and_run_next, timer::set_next_trigger,
+};
 
 use self::context::TrapContext;
 
@@ -24,6 +26,13 @@ pub fn init() {
     unsafe {
         // 将stvec设置为Direct模式,并指向__alltraps的地址
         stvec::write(__alltraps as usize, TrapMode::Direct);
+    }
+}
+
+/// 设置了sie.stie使得S特权级时钟终端不会被屏蔽
+pub fn enable_timer_interrupt() {
+    unsafe {
+        sie::set_stimer();
     }
 }
 
@@ -49,6 +58,11 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         Trap::Exception(Exception::IllegalInstruction) => {
             println!("[kernel] IllegalInstruction in application, kernel killed it.");
             panic!("[kernel] Cannot continue")
+        }
+        Trap::Interrupt(Interrupt::SupervisorTimer) => {
+            println!("[kernel] SupervisorTimer!!!");
+            set_next_trigger();
+            suspend_current_and_run_next();
         }
         _ => {
             panic!(

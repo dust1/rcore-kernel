@@ -22,6 +22,13 @@ pub fn console_putchar(c: usize) {
     sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
 }
 
+/// 设置mtimecmp的值
+///
+/// mtimecmp：一旦计数器mtime的值超过了mtimecmp，就会触发一次时钟中断
+pub fn set_timer(timer: usize) {
+    sbi_call(SBI_SET_TIMER, timer, 0, 0);
+}
+
 /// which 表示请求RustSBI的服务的类型
 /// arg0 ~ arg2 表示传递给RustSBI的3个参数
 #[inline(always)]
