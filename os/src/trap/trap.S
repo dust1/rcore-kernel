@@ -46,6 +46,7 @@ __restore:
     # case1: start running app by __restore
     # case2: back to U after handling trap
     # mv sp, a0
+    # 此时sp指向内核态,sscratch指向用户态
     # now sp->kernel stack(after allocated), sscratch->user stack
     # restore sstatus/sepc
     # 负责从内核栈栈顶的trap上下文中恢复通用寄存器和CSR

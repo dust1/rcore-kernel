@@ -60,7 +60,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             panic!("[kernel] Cannot continue")
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            println!("[kernel] SupervisorTimer!!!");
+            // println!("[kernel] SupervisorTimer!!!");
             set_next_trigger();
             suspend_current_and_run_next();
         }

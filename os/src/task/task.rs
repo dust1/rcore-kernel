@@ -8,6 +8,12 @@ use super::context::TaskContext;
 pub struct TaskControlBlock {
     pub task_status: TaskStatus,
     pub task_cx: TaskContext,
+    // 开始时间
+    pub start_time: usize,
+    // 应用完成时间
+    pub app_end_time: usize,
+    // 内核完成时间
+    pub kernel_end_time: usize,
 }
 
 #[derive(Clone, Copy, PartialEq)]

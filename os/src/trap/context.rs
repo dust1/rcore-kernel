@@ -19,6 +19,7 @@ impl TrapContext {
     }
 
     /// entry - 应用程序入口点
+    /// sp: 用户栈指针
     pub fn app_init_context(entry: usize, sp: usize) -> Self {
         let mut sstatus = sstatus::read();
         sstatus.set_spp(SPP::User);

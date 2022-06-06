@@ -6,9 +6,6 @@ extern crate user_lib;
 
 use user_lib::{get_time, yield_};
 
-const WIDTH: usize = 10;
-const HEIGHT: usize = 3;
-
 #[no_mangle]
 fn main() -> i32 {
     let current_timer = get_time();

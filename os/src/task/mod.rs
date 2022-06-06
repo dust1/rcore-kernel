@@ -4,7 +4,7 @@ use crate::{
     config::MAX_APP_NUM,
     loader::{get_num_app, init_app_cx},
     sync::up::UPSafeCell,
-    task::{context::TaskContext, task::TaskStatus},
+    task::{context::TaskContext, task::TaskStatus}, timer::{get_time, get_time_ms}, println,
 };
 
 use self::{switch::__switch, task::TaskControlBlock};
@@ -38,6 +38,9 @@ lazy_static! {
         let mut tasks = [TaskControlBlock {
             task_status: TaskStatus::UnInit,
             task_cx: TaskContext::zero_init(),
+            start_time: 0,
+            app_end_time: 0,
+            kernel_end_time: 0,
         }; MAX_APP_NUM];
         for (i, task) in tasks.iter_mut().enumerate() {
             task.task_cx = TaskContext::goto_restore(init_app_cx(i));
@@ -62,6 +65,7 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
+        task0.start_time = get_time_ms();
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
         drop(inner);
         // 创建一个空的上下文作为初始控制流
@@ -85,6 +89,7 @@ impl TaskManager {
             unsafe {
                 __switch(current_task_cx_ptr, next_task_cx_ptr);
             }
+            // 返回用户态
         } else {
             // 当所有任务结束的时候,并不会调用__switch,这会导致这个任务对应的调用栈里的栈空间无法再使用
             panic!("All application completed!")
@@ -113,8 +118,11 @@ impl TaskManager {
     /// 将任务状态从Running到Exited
     fn mark_current_exited(&self) {
         let mut inner = self.inner.exclusive_access();
+        // 当前任务id
         let current = inner.current_task;
         inner.tasks[current].task_status = TaskStatus::Exited;
+        inner.tasks[current].kernel_end_time = get_time_ms();
+        println!("[kernel] Task PID: {}, start_time:{}, end_time:{}", current, inner.tasks[current].start_time,inner.tasks[current].kernel_end_time);
     }
 }
 
@@ -135,7 +143,9 @@ pub fn mark_current_exited() {
 }
 
 pub fn suspend_current_and_run_next() {
+    // 将当前的任务从Running修改为Ready
     mark_current_suspended();
+    // 运行下一个任务
     run_next_task();
 }
 
