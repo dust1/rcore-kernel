@@ -1,10 +1,10 @@
-
-
 use crate::{
     config::MAX_APP_NUM,
     loader::{get_num_app, init_app_cx},
+    println,
     sync::up::UPSafeCell,
-    task::{context::TaskContext, task::TaskStatus}, timer::{get_time, get_time_ms}, println,
+    task::{context::TaskContext, task::TaskStatus},
+    timer::{get_time, get_time_ms},
 };
 
 use self::{switch::__switch, task::TaskControlBlock};
@@ -122,7 +122,10 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current].task_status = TaskStatus::Exited;
         inner.tasks[current].kernel_end_time = get_time_ms();
-        println!("[kernel] Task PID: {}, start_time:{}, end_time:{}", current, inner.tasks[current].start_time,inner.tasks[current].kernel_end_time);
+        println!(
+            "[kernel] Task PID: {}, start_time:{}, end_time:{}",
+            current, inner.tasks[current].start_time, inner.tasks[current].kernel_end_time
+        );
     }
 }
 

@@ -2,7 +2,7 @@
 use crate::{
     println,
     task::{exit_current_and_run_next, suspend_current_and_run_next},
-    timer::{get_time_ms},
+    timer::get_time_ms,
 };
 
 /// task exits and submit an exit code
