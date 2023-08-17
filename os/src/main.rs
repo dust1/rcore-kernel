@@ -21,6 +21,7 @@ mod console;
 
 use core::arch::global_asm;
 
+// 嵌入汇编代码,首先执行这段汇编代码
 global_asm!(include_str!("entry.asm"));
 
 // 寻找应用程序并连接
