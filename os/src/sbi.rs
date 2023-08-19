@@ -1,4 +1,5 @@
 #![allow(unused)]
+// 内核与 RustSBI 通信的相关功能实现
 /// RustSBI支持的服务类型常量
 const SBI_SET_TIMER: usize = 0;
 const SBI_CONSOLE_PUTCHAR: usize = 1;
@@ -12,6 +13,7 @@ const SBI_SHUTDOWN: usize = 8;
 
 use core::arch::asm;
 
+/// 关机
 pub fn shutdown() -> ! {
     sbi_call(SBI_SHUTDOWN, 0, 0, 0);
     panic!("It should shutdown!");

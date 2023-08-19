@@ -41,11 +41,16 @@ pub fn rust_main() -> ! {
     panic!("Unreachable in rust_main!")
 }
 
+// 对 .bss 段的清零
+// 在使用任何被分配到 .bss 段的全局变量之前我们需要确保 .bss 段已被清零。
 fn clear_bss() {
     extern "C" {
+        // .bss段的起始地址
         fn sbss();
+        // .bss段的终止地址
         fn ebss();
     }
+
     // 找到全局符号sbss,ebss(它们由连接脚本linker.ld给出)
     // 分别指向要被清零的.bss起始段和终止地址
     (sbss as usize..ebss as usize).for_each(|a| {
