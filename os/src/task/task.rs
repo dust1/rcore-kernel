@@ -1,6 +1,6 @@
 use super::context::TaskContext;
 
-/// 任务控制块
+/// 任务控制块,内核管理应用的核心数据结构。
 ///
 /// 负责保存一个任务的状态
 /// 由任务状态与任务上下文组成
@@ -16,6 +16,7 @@ pub struct TaskControlBlock {
     pub kernel_end_time: usize,
 }
 
+/// 任务状态
 #[derive(Clone, Copy, PartialEq)]
 pub enum TaskStatus {
     UnInit,

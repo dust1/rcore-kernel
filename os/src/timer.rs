@@ -8,10 +8,16 @@ use crate::{config::CLOCK_FREQ, sbi::set_timer};
 const TICKS_PER_SEC: usize = 100;
 
 const MSEC_PER_SEC: usize = 1000;
+const MICRO_PER_SEC: usize = 1000_000;
 
 /// 以毫秒为单位返回当前计数器的值
 pub fn get_time_ms() -> usize {
     time::read() / (CLOCK_FREQ / MSEC_PER_SEC)
+}
+
+/// 以微秒为单位返回当前计数器的值
+pub fn get_time_us() -> usize {
+    time::read() / (CLOCK_FREQ / MICRO_PER_SEC)
 }
 
 /// 取得当前mtime的值

@@ -18,8 +18,8 @@ impl TrapContext {
         self.x[2] = sp;
     }
 
-    /// entry - 应用程序入口点
-    /// sp: 用户栈指针
+    /// entry - 应用程序在内存中的起始地址
+    /// sp: 在用户栈中该应用程序所在的栈的起始地址
     pub fn app_init_context(entry: usize, sp: usize) -> Self {
         let mut sstatus = sstatus::read();
         sstatus.set_spp(SPP::User);

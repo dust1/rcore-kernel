@@ -1,3 +1,7 @@
+// 应用程序通过 ecall 进入到内核状态时，操作系统保存被打断的应用程序的 Trap 上下文；
+// 操作系统根据Trap相关的CSR寄存器内容，完成系统调用服务的分发与处理；
+// 操作系统完成系统调用服务后，需要恢复被打断的应用程序的Trap 上下文，并通 sret 让应用程序继续执行。
+
 use core::arch::global_asm;
 
 use riscv::register::{
@@ -37,6 +41,8 @@ pub fn enable_timer_interrupt() {
 }
 
 /// 在S模式下被调用
+/// 
+/// 当S/U模式下发起trap的时候会调用该函数进行分发和处理
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = scause::read();
@@ -60,7 +66,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             panic!("[kernel] Cannot continue")
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            // println!("[kernel] SupervisorTimer!!!");
+            println!("[kernel] SupervisorTimer!!!");
             set_next_trigger();
             suspend_current_and_run_next();
         }

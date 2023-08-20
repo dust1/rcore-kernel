@@ -61,12 +61,16 @@ lazy_static! {
 }
 
 impl TaskManager {
+
+    /// 运行第一个任务
     pub fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
         task0.start_time = get_time_ms();
+
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
+
         drop(inner);
         // 创建一个空的上下文作为初始控制流
         let mut _unused = TaskContext::zero_init();
@@ -76,19 +80,28 @@ impl TaskManager {
         panic!("unreachable in run_first_task!")
     }
 
+    /// 运行下一个任务
     pub fn run_next_task(&self) {
         if let Some(app_id) = self.find_next_task() {
             let mut inner = self.inner.exclusive_access();
+
             let current = inner.current_task;
+
+            // 将下一个任务设置为Running
             inner.tasks[app_id].task_status = TaskStatus::Running;
             inner.current_task = app_id;
+
+            // 获取任务进行切换所需的两个任务的上下文对象
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[app_id].task_cx as *const TaskContext;
+
             drop(inner);
 
+            // 任务寄存器调换
             unsafe {
                 __switch(current_task_cx_ptr, next_task_cx_ptr);
             }
+
             // 返回用户态
         } else {
             // 当所有任务结束的时候,并不会调用__switch,这会导致这个任务对应的调用栈里的栈空间无法再使用
@@ -111,15 +124,18 @@ impl TaskManager {
     /// 将任务状态从Running到Ready
     fn mark_current_suspended(&self) {
         let mut inner = self.inner.exclusive_access();
+        // 获取当前正在运行的任务
         let current = inner.current_task;
+        // 将当前正在与运行的任务状态修改为Ready
         inner.tasks[current].task_status = TaskStatus::Ready;
     }
 
     /// 将任务状态从Running到Exited
     fn mark_current_exited(&self) {
         let mut inner = self.inner.exclusive_access();
-        // 当前任务id
+        // 当前运行的任务id
         let current = inner.current_task;
+
         inner.tasks[current].task_status = TaskStatus::Exited;
         inner.tasks[current].kernel_end_time = get_time_ms();
         println!(
@@ -145,6 +161,7 @@ pub fn mark_current_exited() {
     TASK_MANAGER.mark_current_exited()
 }
 
+/// 暂停当前的应用并切换到下一个应用
 pub fn suspend_current_and_run_next() {
     // 将当前的任务从Running修改为Ready
     mark_current_suspended();
@@ -152,6 +169,7 @@ pub fn suspend_current_and_run_next() {
     run_next_task();
 }
 
+/// 退出当前的应用并切换到下个应用
 pub fn exit_current_and_run_next() {
     mark_current_exited();
     run_next_task();

@@ -34,9 +34,12 @@ pub fn rust_main() -> ! {
     // S模式运行
     trap::init();
     loader::load_apps();
+
+    // 设置S特权级的时钟中断不会被屏蔽
     trap::enable_timer_interrupt();
     // 设置第一个10ms计时器
     timer::set_next_trigger();
+
     task::run_first_app();
     panic!("Unreachable in rust_main!")
 }
