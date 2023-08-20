@@ -67,7 +67,9 @@ pub fn load_apps() {
     let num_app = get_num_app();
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
     // 保证 在它之后的取指过程必须能够看到在它之前的所有对于取指内存区域的修改
-    unsafe { asm!("fence.i"); }
+    unsafe {
+        asm!("fence.i");
+    }
 
     for i in 0..num_app {
         // 获取每个APP的起始地址
@@ -96,7 +98,7 @@ pub fn load_apps() {
 }
 
 /// 获取对应id的应用程序在操作系统中被运行时的内存地址
-/// 
+///
 /// 每个应用程序的大小都是固定的APP_SIZE_LIMIT
 pub fn get_base_i(app_id: usize) -> usize {
     APP_BASE_ADDRESS + app_id * APP_SIZE_LIMIT
@@ -114,7 +116,7 @@ pub fn get_num_app() -> usize {
 }
 
 /// 构造该任务的 Trap 上下文（包括应用入口地址和用户栈指针）并将其压入到内核栈顶
-/// 
+///
 /// sp：这个应用程序对应的用户栈
 /// return: 返回的是这个应用程序对应的内核栈栈顶地址
 pub fn init_app_cx(app_id: usize) -> usize {

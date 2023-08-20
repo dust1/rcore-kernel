@@ -41,7 +41,7 @@ pub fn enable_timer_interrupt() {
 }
 
 /// 在S模式下被调用
-/// 
+///
 /// 当S/U模式下发起trap的时候会调用该函数进行分发和处理
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {

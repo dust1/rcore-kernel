@@ -22,7 +22,7 @@ impl TaskContext {
     /// 进入用户态
     /// 构造每个任务保存在任务控制块中的任务上下文。
     /// 在 __switch 从它上面恢复并返回之后就会直接跳转到 __restore
-    /// 
+    ///
     /// 传入一个内核栈地址
     pub fn goto_restore(kstack_ptr: usize) -> Self {
         extern "C" {

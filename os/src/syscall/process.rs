@@ -2,7 +2,7 @@
 use crate::{
     println,
     task::{exit_current_and_run_next, suspend_current_and_run_next},
-    timer::{get_time_ms, get_time_us},
+    timer::get_time_us,
 };
 
 /// 退出当前的应用并切换到下个应用。

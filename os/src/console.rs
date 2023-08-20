@@ -4,7 +4,6 @@ use core::fmt::{self, Write};
 struct Stdout;
 
 impl Write for Stdout {
-    
     /// 写入字符串
     fn write_str(&mut self, s: &str) -> fmt::Result {
         for c in s.chars() {
@@ -18,7 +17,6 @@ impl Write for Stdout {
 pub fn print(args: fmt::Arguments) {
     Stdout.write_fmt(args).unwrap();
 }
-
 
 /// 通过format_args!宏来实现输出
 #[macro_export]

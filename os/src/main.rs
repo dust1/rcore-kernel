@@ -5,6 +5,9 @@
 
 extern crate alloc;
 
+#[path = "boards/qemu.rs"]
+mod board;
+
 mod config;
 mod lang_items;
 mod loader;

@@ -4,7 +4,7 @@ use crate::{
     println,
     sync::up::UPSafeCell,
     task::{context::TaskContext, task::TaskStatus},
-    timer::{get_time, get_time_ms},
+    timer::get_time_ms,
 };
 
 use self::{switch::__switch, task::TaskControlBlock};
@@ -61,7 +61,6 @@ lazy_static! {
 }
 
 impl TaskManager {
-
     /// 运行第一个任务
     pub fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
