@@ -31,7 +31,7 @@ pub struct TaskManagerInner {
     current_task: usize,
 }
 
-// 初始化TSAK_MANAGER,这些数据本质上都被保存在.data段中
+// 找到 link_app.S 中提供的符号 _num_app ，并从这里开始解析出应用数量以及各个应用的起始地址。
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
         let num_app = get_num_app();

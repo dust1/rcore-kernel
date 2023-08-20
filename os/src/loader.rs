@@ -59,13 +59,14 @@ impl UserStack {
 /// 将所有的app都加载到内存中
 /// 不同app的内存地址是不同的
 pub fn load_apps() {
-    /// 汇编程序会静态编译出应用程序的地址信息
+    // 汇编程序会静态编译出应用程序的地址信息
     extern "C" {
         fn _num_app();
     }
     let num_app_ptr = _num_app as *const usize;
     let num_app = get_num_app();
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
+    // 保证 在它之后的取指过程必须能够看到在它之前的所有对于取指内存区域的修改
     unsafe { asm!("fence.i") }
 
     for i in 0..num_app {

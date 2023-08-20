@@ -5,3 +5,5 @@
     * 脚本介绍参考: [调整内核的内存布局](http://rcore-os.cn/rCore-Tutorial-Book-v3/chapter1/4first-instruction-in-kernel2.html#id4)
 * entry.asm: 程序结构分配脚本。功能包括：分配启动栈空间。
     * 介绍参考: [分配并使用启动栈](http://rcore-os.cn/rCore-Tutorial-Book-v3/chapter1/5support-func-call.html#jump-practice)
+* loader.rs: 对APP应用的加载
+* sync/up.rs: 在RefCell的基础上再进行封装的UPSafeCell，允许我们在单核上安全使用可变全局变量

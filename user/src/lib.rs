@@ -7,6 +7,8 @@ pub mod console;
 mod lang_items;
 mod syscall;
 
+/// 用户库的入口点
+/// #[link_section = ".text.entry"]代码将这段代码编译后的汇编代码放置在一个名为.text.entry的代码段中
 #[no_mangle]
 #[link_section = ".text.entry"]
 pub extern "C" fn _start() -> ! {
@@ -15,12 +17,15 @@ pub extern "C" fn _start() -> ! {
     panic!("unreachable after sys_exit!");
 }
 
+/// 函数符号main标志为弱链接，当链接的时候该main函数处于次优先级
+/// 使用#![feature(linkage)]来保证此功能的可用
 #[linkage = "weak"]
 #[no_mangle]
 fn main() -> i32 {
     panic!("Cannot find main!");
 }
 
+/// 对.bss段进行初始化
 fn clear_bss() {
     extern "C" {
         fn start_bss();
