@@ -22,6 +22,9 @@ mod trap;
 #[macro_use]
 mod console;
 
+#[macro_use]
+extern crate bitflags;
+
 use core::arch::global_asm;
 
 // 嵌入汇编代码,首先执行这段汇编代码
@@ -32,6 +35,9 @@ global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
 pub fn rust_main() -> ! {
+    // init_heap();
+
+    // heap_test();
     clear_bss();
     println!("Hello World!!");
     // S模式运行
