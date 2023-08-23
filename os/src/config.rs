@@ -17,3 +17,6 @@ pub const PAGE_SIZE_BITS: usize = 12;
 
 /// 一个内存页面的大小：4KB
 pub const PAGE_SIZE: usize = 4096;
+
+/// 内存大小
+pub const MEMORY_END: usize = 0x80800000;

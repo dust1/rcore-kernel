@@ -1,5 +1,7 @@
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
 
+use super::page_table::PageTableEntry;
+
 /// 这四个地址的struct都是对usize的简单包装
 ///
 /// 地址包含了页号和页内偏移
@@ -88,6 +90,32 @@ impl PhysAddr {
     }
 }
 
+impl PhysPageNum {
+    /// 返回一个页表项定长数组的可变引用，代表多级页表中的一个节点
+    ///
+    /// 这表示在这个物理页号起始地点保存着PageTableEntry数据
+    pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
+        let pa: PhysAddr = self.clone().into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
+    }
+
+    /// 获取这个物理页帧的可变引用
+    /// 
+    /// 直接操作数据
+    pub fn get_bytes_array(&self) -> &'static mut [u8] {
+        let pa: PhysAddr = self.clone().into();
+        // 从物理栈帧的起始地址开始，取出一块栈帧
+        // 栈帧大小4K = 4096bit
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
+    }
+
+    /// 获取位于该物理栈帧开头的类型的T的可变引用
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: PhysAddr = self.clone().into();
+        unsafe { (pa.0 as *mut T).as_mut().unwrap() }
+    }
+}
+
 /// 虚拟地址实现，同上
 impl From<usize> for VirtAddr {
     fn from(value: usize) -> Self {
@@ -137,5 +165,21 @@ impl VirtAddr {
 
     pub fn ceil(&self) -> VirtPageNum {
         VirtPageNum((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
+    }
+}
+
+impl VirtPageNum {
+    /// 取出虚拟页号的三级页索引，并按照从高到低的顺序返回。
+    ///
+    /// 它里面包裹的 usize 可能有27位，也有可能有52位，
+    /// 但这里我们是用来在多级页表上进行遍历，因此只取出低27位。
+    pub fn indexes(&self) -> [usize; 3] {
+        let mut vpn = self.0;
+        let mut idx = [0usize; 3];
+        for i in (0..3).rev() {
+            idx[i] = vpn & 511;
+            vpn >>= 9;
+        }
+        idx
     }
 }
