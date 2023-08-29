@@ -42,7 +42,6 @@ pub fn rust_main() -> ! {
     println!("Hello World!!");
     // S模式运行
     trap::init();
-    loader::load_apps();
 
     // 设置S特权级的时钟中断不会被屏蔽
     trap::enable_timer_interrupt();

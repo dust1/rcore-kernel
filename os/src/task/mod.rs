@@ -1,6 +1,6 @@
 use crate::{
     config::MAX_APP_NUM,
-    loader::{get_num_app, init_app_cx},
+    loader::get_num_app,
     println,
     sync::up::UPSafeCell,
     task::{context::TaskContext, task::TaskStatus},
@@ -43,7 +43,8 @@ lazy_static! {
             kernel_end_time: 0,
         }; MAX_APP_NUM];
         for (i, task) in tasks.iter_mut().enumerate() {
-            task.task_cx = TaskContext::goto_restore(init_app_cx(i));
+            // TODO
+            // task.task_cx = TaskContext::goto_restore(init_app_cx(i));
             task.task_status = TaskStatus::Ready;
         }
 

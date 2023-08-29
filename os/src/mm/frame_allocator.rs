@@ -1,6 +1,8 @@
+use core::fmt::{Debug, Formatter};
+
 use crate::{config::MEMORY_END, mm::address::PhysAddr, println, sync::up::UPSafeCell};
 /// 物理页帧管理器
-use alloc::vec::Vec;
+use alloc::{fmt, vec::Vec};
 use lazy_static::lazy_static;
 
 use super::address::PhysPageNum;
@@ -38,7 +40,12 @@ pub struct StackFrameAllocator {
 }
 
 /// 对物理页号进行封装的物理页帧结构体
-pub struct FrameStrack {
+///
+/// 当开启MMU之后内核对内存地址的访问也变更为虚拟地址，
+/// 但在实际运行中需要内核保留以纯软件形式访问实际物理地址的能力
+/// 因此内核地址空间中需要存在一个恒等映射到内核数据段之外的可用物理页帧的逻辑段
+/// 此时访问地址还是虚拟地址，但是实际等同于物理地址
+pub struct FrameTracker {
     pub ppn: PhysPageNum,
 }
 
@@ -88,17 +95,26 @@ impl StackFrameAllocator {
     }
 }
 
-impl FrameStrack {
+impl FrameTracker {
     /// 根据物理页号创建物理页帧
-    ///
-    /// 对物理页号指定的内存进行清理
     pub fn new(ppn: PhysPageNum) -> Self {
-        todo!()
+        // 对物理页号指定的内存进行清理
+        let array = ppn.get_bytes_array();
+        for i in array {
+            *i = 0;
+        }
+        Self { ppn }
+    }
+}
+
+impl Debug for FrameTracker {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", self.ppn.0))
     }
 }
 
 /// 物理页帧被回收的时候回收物理页号对应的内存
-impl Drop for FrameStrack {
+impl Drop for FrameTracker {
     fn drop(&mut self) {
         frame_dealloc(self.ppn)
     }
@@ -119,11 +135,11 @@ pub fn init_frame_allocator() {
 /// 分配物理页帧
 ///
 /// 对外提供的接口
-pub fn frame_alloc() -> Option<FrameStrack> {
+pub fn frame_alloc() -> Option<FrameTracker> {
     FRAME_ALLOCATOR
         .exclusive_access()
         .alloc()
-        .map(|ppn| FrameStrack::new(ppn))
+        .map(|ppn| FrameTracker::new(ppn))
 }
 
 /// 回收物理页帧
@@ -133,7 +149,7 @@ fn frame_dealloc(ppn: PhysPageNum) {
 
 #[allow(unused)]
 pub fn frame_allocator_test() {
-    let mut v: Vec<FrameStrack> = Vec::new();
+    let mut v: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {
         let frame = frame_alloc().unwrap();
         let ppn = frame.ppn.0;

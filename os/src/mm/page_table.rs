@@ -3,7 +3,7 @@ use bitflags::*;
 
 use super::{
     address::{PhysPageNum, VirtPageNum},
-    frame_allocator::{frame_alloc, FrameStrack},
+    frame_allocator::{frame_alloc, FrameTracker},
 };
 
 bitflags! {
@@ -35,7 +35,7 @@ pub struct PageTable {
     // 根页表
     root_ppn: PhysPageNum,
     // 后续的所有页帧
-    frames: Vec<FrameStrack>,
+    frames: Vec<FrameTracker>,
 }
 
 impl PageTableEntry {
