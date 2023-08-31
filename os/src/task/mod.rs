@@ -1,12 +1,8 @@
-use core::borrow::BorrowMut;
-
 use crate::{
-    config::MAX_APP_NUM,
     loader::{get_app_data, get_num_app},
     println,
     sync::up::UPSafeCell,
     task::{context::TaskContext, task::TaskStatus},
-    timer::get_time_ms,
     trap::context::TrapContext,
 };
 

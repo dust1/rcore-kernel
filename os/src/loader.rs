@@ -1,11 +1,3 @@
-use core::arch::asm;
-
-use crate::{
-    config::{APP_BASE_ADDRESS, APP_SIZE_LIMIT, KERNEL_STACK_SIZE, MAX_APP_NUM, USER_STACK_SIZE},
-    println,
-    trap::context::TrapContext,
-};
-
 /// 获取链接到内核内的应用的数目
 pub fn get_num_app() -> usize {
     extern "C" {

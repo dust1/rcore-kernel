@@ -27,32 +27,26 @@ extern crate bitflags;
 
 use core::arch::global_asm;
 
-use crate::mm::memory_set::remap_test;
-
 // 嵌入汇编代码,首先执行这段汇编代码
 global_asm!(include_str!("entry.asm"));
-
 // 寻找应用程序并连接
 global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
 pub fn rust_main() -> ! {
-    // init_heap();
-
-    // heap_test();
     clear_bss();
-    println!("Hello World!!");
+    println!("[Kernel] clear bss was ok...");
+    mm::init();
+    println!("[Kernel] init memory was ok...");
+    mm::remap_test();
+    println!("[Kernel] memory test all pass...");
     // S模式运行
     trap::init();
-
-    remap_test();
-
     // 设置S特权级的时钟中断不会被屏蔽
-    // trap::enable_timer_interrupt();
+    trap::enable_timer_interrupt();
     // 设置第一个10ms计时器
-    // timer::set_next_trigger();
-
-    // task::run_first_app();
+    timer::set_next_trigger();
+    task::run_first_app();
     panic!("Unreachable in rust_main!")
 }
 

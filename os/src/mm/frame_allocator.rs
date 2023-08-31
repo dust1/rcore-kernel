@@ -30,6 +30,7 @@ trait FrameAllocator {
 /// 根据内存是否被使用过，将其分为两种类型的物理页号进行管理
 /// 1. 尚未使用的内存，这部分内存是连续的，因此通过current、end将其进行管理
 /// 2. 已使用并被回收的内存，这部分内存是碎片化的，碎片无法很好的重新归入连续空闲内存管理中，因此用Vec将其单独进行管理
+#[derive(Debug)]
 pub struct StackFrameAllocator {
     // 连续的空闲内存起始页号
     current: usize,
@@ -90,6 +91,7 @@ impl FrameAllocator for StackFrameAllocator {
 impl StackFrameAllocator {
     /// 根据提供的一段连续的空闲物理空间的前后页号初始化物理页帧管理器
     fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
+        println!("[Kernel Debug] current = {}, end = {}", l.0, r.0);
         self.current = l.0;
         self.end = r.0;
     }

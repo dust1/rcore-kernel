@@ -10,6 +10,8 @@ pub mod frame_allocator;
 
 pub mod memory_set;
 
+pub use memory_set::remap_test;
+
 /// 内存结构初始化
 pub fn init() {
     // 初始化全局内存动态分配器

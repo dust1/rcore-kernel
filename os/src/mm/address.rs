@@ -167,7 +167,11 @@ impl PhysAddr {
     ///
     /// 同上
     pub fn ceil(&self) -> PhysPageNum {
-        PhysPageNum((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
+        if self.0 == 0 {
+            PhysPageNum(0)
+        } else {
+            PhysPageNum((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
+        }
     }
 }
 
