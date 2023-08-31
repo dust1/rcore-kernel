@@ -5,7 +5,6 @@ use lazy_static::lazy_static;
 use riscv::register::satp;
 
 use crate::{
-    board::MMIO,
     config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE},
     mm::{
         address::{PhysPageNum, StepByOne},
@@ -472,29 +471,26 @@ pub fn remap_test() {
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
     let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
     let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
-    assert_eq!(
+    assert!(
         kernel_space
             .page_table
             .translate(mid_text.floor())
             .unwrap()
-            .writable(),
-        false
+            .writable()
     );
-    assert_eq!(
+    assert!(
         kernel_space
             .page_table
             .translate(mid_rodata.floor())
             .unwrap()
             .writable(),
-        false,
     );
-    assert_eq!(
+    assert!(
         kernel_space
             .page_table
             .translate(mid_data.floor())
             .unwrap()
             .executable(),
-        false,
     );
     println!("remap_test passed!");
 }

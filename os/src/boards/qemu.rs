@@ -4,6 +4,6 @@
 /// e.g. 后面的CLOCK_FREQ/100等于1s/100=100ms
 pub const CLOCK_FREQ: usize = 12500000;
 
-pub const MMIO: &[(usize, usize)] = &[
+pub const _MMIO: &[(usize, usize)] = &[
     (0x0010_0000, 0x00_2000), // VIRT_TEST/RTC  in virt machine
 ];

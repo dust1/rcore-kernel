@@ -128,7 +128,7 @@ impl PageTable {
 
     /// 如果能够找到页表项，那么它会将页表项拷贝一份并返回，否则就返回一个 None 。
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
-        self.find_pte(vpn).map(|pte| pte.clone())
+        self.find_pte(vpn).map(|pte| *pte)
     }
 
     /// 在多级页表找到一个虚拟页号对应的页表项的可变引用。

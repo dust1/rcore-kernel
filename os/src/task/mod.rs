@@ -42,7 +42,9 @@ lazy_static! {
             tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
 
-        let task_manager = TaskManager {
+        
+
+        TaskManager {
             num_app,
             inner: unsafe {
                 UPSafeCell::new(TaskManagerInner {
@@ -50,9 +52,7 @@ lazy_static! {
                     current_task: 0,
                 })
             },
-        };
-
-        task_manager
+        }
     };
 }
 

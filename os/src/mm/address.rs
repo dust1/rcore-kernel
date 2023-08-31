@@ -48,7 +48,7 @@ where
     T: StepByOne + Copy + PartialEq + PartialOrd + Debug,
 {
     pub fn new(start: T, end: T) -> Self {
-        assert!(start <= end, "start {:?} > end {:?}!", start, end);
+        assert!(start <= end, "start {start:?} > end {end:?}!");
         Self { l: start, r: end }
     }
     pub fn get_start(&self) -> T {
@@ -180,7 +180,7 @@ impl PhysPageNum {
     ///
     /// 这表示在这个物理页号起始地点保存着PageTableEntry数据
     pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
-        let pa: PhysAddr = self.clone().into();
+        let pa: PhysAddr = (*self).into();
         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
     }
 
@@ -188,7 +188,7 @@ impl PhysPageNum {
     ///
     /// 直接操作数据
     pub fn get_bytes_array(&self) -> &'static mut [u8] {
-        let pa: PhysAddr = self.clone().into();
+        let pa: PhysAddr = (*self).into();
         // 从物理栈帧的起始地址开始，取出一块栈帧
         // 栈帧大小4K = 4096bit
         unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, 4096) }
@@ -196,7 +196,7 @@ impl PhysPageNum {
 
     /// 获取位于该物理栈帧开头的类型的T的可变引用
     pub fn get_mut<T>(&self) -> &'static mut T {
-        let pa: PhysAddr = self.clone().into();
+        let pa: PhysAddr = (*self).into();
         unsafe { (pa.0 as *mut T).as_mut().unwrap() }
     }
 }

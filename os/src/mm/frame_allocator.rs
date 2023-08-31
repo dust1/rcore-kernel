@@ -65,15 +65,13 @@ impl FrameAllocator for StackFrameAllocator {
     fn alloc(&mut self) -> Option<PhysPageNum> {
         if let Some(usize) = self.recycled.pop() {
             Some(usize.into())
+        } else if self.current == self.end {
+            // 内存耗尽
+            None
         } else {
-            if self.current == self.end {
-                // 内存耗尽
-                None
-            } else {
-                let ppn = self.current;
-                self.current -= 1;
-                Some(ppn.into())
-            }
+            let ppn = self.current;
+            self.current -= 1;
+            Some(ppn.into())
         }
     }
 
@@ -81,7 +79,7 @@ impl FrameAllocator for StackFrameAllocator {
     ///
     /// 先要检查ppn的合法性，然后将其作为碎片化的内存进行回收管理
     fn dealloc(&mut self, ppn: PhysPageNum) {
-        if self.recycled.iter().find(|v| ppn.0.eq(v)).is_some() {
+        if self.recycled.iter().any(|v| ppn.0.eq(&v)) {
             panic!("valid ppn {}", ppn.0)
         }
         self.recycled.push(ppn.0);
@@ -140,7 +138,7 @@ pub fn frame_alloc() -> Option<FrameTracker> {
     FRAME_ALLOCATOR
         .exclusive_access()
         .alloc()
-        .map(|ppn| FrameTracker::new(ppn))
+        .map(FrameTracker::new)
 }
 
 /// 回收物理页帧
