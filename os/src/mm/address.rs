@@ -112,14 +112,14 @@ impl StepByOne for VirtPageNum {
 impl From<usize> for PhysAddr {
     fn from(value: usize) -> Self {
         // 仅使用usize低位的56位来生成物理地址
-        Self(value & (1 << PA_WIDTH_SV39 - 1))
+        Self(value & ((1 << PA_WIDTH_SV39) - 1))
     }
 }
 
 impl From<usize> for PhysPageNum {
     fn from(value: usize) -> Self {
         // 从usize低位的12位生成物理页号
-        Self(value & (1 << PPN_WIDTH_SV39 - 1))
+        Self(value & ((1 << PPN_WIDTH_SV39) - 1))
     }
 }
 
@@ -170,7 +170,7 @@ impl PhysAddr {
         if self.0 == 0 {
             PhysPageNum(0)
         } else {
-            PhysPageNum((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
+            PhysPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
         }
     }
 }
@@ -204,13 +204,13 @@ impl PhysPageNum {
 /// 虚拟地址实现，同上
 impl From<usize> for VirtAddr {
     fn from(value: usize) -> Self {
-        Self(value & (1 << PA_WIDTH_SV39 - 1))
+        Self(value & ((1 << PA_WIDTH_SV39) - 1))
     }
 }
 
 impl From<usize> for VirtPageNum {
     fn from(value: usize) -> Self {
-        Self(value & (1 << PPN_WIDTH_SV39 - 1))
+        Self(value & ((1 << PPN_WIDTH_SV39) - 1))
     }
 }
 

@@ -1,6 +1,6 @@
 use buddy_system_allocator::LockedHeap;
 
-use crate::{config::{KERNEL_STACK_SIZE, KERNEL_HEAP_SIZE}, println};
+use crate::{config::KERNEL_HEAP_SIZE, println};
 
 /// 全局的动态内存分配
 #[global_allocator]

@@ -27,9 +27,3 @@ pub fn get_app_data(app_id: usize) -> &'static [u8] {
         )
     }
 }
-
-/// 应当删除
-pub fn init_app_cx(app_id: usize) -> usize {
-    // TODO
-    todo!()
-}

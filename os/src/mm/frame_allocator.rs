@@ -91,7 +91,6 @@ impl FrameAllocator for StackFrameAllocator {
 impl StackFrameAllocator {
     /// 根据提供的一段连续的空闲物理空间的前后页号初始化物理页帧管理器
     fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
-        println!("[Kernel Debug] current = {}, end = {}", l.0, r.0);
         self.current = l.0;
         self.end = r.0;
     }

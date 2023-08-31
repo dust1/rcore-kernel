@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use riscv::register::satp;
 
 use crate::{
+    board::MMIO,
     config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE},
     mm::{
         address::{PhysPageNum, StepByOne},
@@ -127,6 +128,7 @@ impl MemorySet {
             // 如果创建MapArea的时候有初始化数据，则将数据复制到物理地址
             map_area.copy_data(&mut self.page_table, data);
         }
+        println!("[Kernel Debug] map ok");
         self.areas.push(map_area);
     }
 
@@ -216,6 +218,19 @@ impl MemorySet {
             ),
             None,
         );
+
+        // println!("mapping memory-mapped registers");
+        // for pair in MMIO {
+        //     memory_set.push(
+        //         MapArea::new(
+        //             (*pair).0.into(),
+        //             ((*pair).0 + (*pair).1).into(),
+        //             MapType::Identical,
+        //             MapPermission::R | MapPermission::W,
+        //         ),
+        //         None,
+        //     );
+        // }
 
         memory_set
     }
@@ -326,6 +341,7 @@ impl MemorySet {
     ///
     /// 同时在切换地址空间的时候也会调用到
     pub fn activate(&self) {
+        println!("[Kernel Debug] activate");
         let satp = self.page_table.token();
         unsafe {
             // 将构造的token写入satp CSR中, 此时SV39分页模式启用
@@ -355,9 +371,11 @@ impl MapArea {
     ) -> Self {
         let start_vpn: VirtPageNum = start_va.floor();
         let end_vpn: VirtPageNum = end_va.ceil();
+        let vpn_range = VPNRange::new(start_vpn, end_vpn);
+        let data_frames = BTreeMap::new();
         Self {
-            vpn_range: VPNRange::new(start_vpn, end_vpn),
-            data_frames: BTreeMap::new(),
+            vpn_range,
+            data_frames,
             map_type,
             map_perm,
         }
@@ -374,6 +392,8 @@ impl MapArea {
             self.map_one(page_table, vpn);
         }
     }
+
+    #[allow(unused)]
     pub fn unmap(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {
             self.unmap_one(page_table, vpn);
@@ -448,7 +468,7 @@ impl MapArea {
 }
 
 pub fn remap_test() {
-    let mut kernel_space = KERNEL_SPACE.exclusive_access();
+    let kernel_space = KERNEL_SPACE.exclusive_access();
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
     let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
     let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();

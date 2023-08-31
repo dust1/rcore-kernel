@@ -5,25 +5,24 @@
 
 extern crate alloc;
 
+#[macro_use]
+extern crate bitflags;
+
 #[path = "boards/qemu.rs"]
 mod board;
 
+#[macro_use]
+mod console;
 mod config;
 mod lang_items;
 mod loader;
 mod mm;
 mod sbi;
 mod sync;
-mod syscall;
-mod task;
+pub mod syscall;
+pub mod task;
 mod timer;
-mod trap;
-
-#[macro_use]
-mod console;
-
-#[macro_use]
-extern crate bitflags;
+pub mod trap;
 
 use core::arch::global_asm;
 

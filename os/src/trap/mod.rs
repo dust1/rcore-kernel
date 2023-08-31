@@ -18,8 +18,6 @@ use crate::{
     timer::set_next_trigger,
 };
 
-use self::context::TrapContext;
-
 pub mod context;
 
 // trap 的上下文保存与恢复
@@ -81,7 +79,6 @@ pub fn trap_return() -> ! {
             options(noreturn)
         );
     }
-    panic!("Unreachable  in back_to_user!!!");
 }
 
 /// 在S模式下被调用

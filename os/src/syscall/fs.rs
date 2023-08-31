@@ -1,4 +1,4 @@
-use crate::{print, mm::page_table::translated_byte_buffer, task::current_user_token};
+use crate::{mm::page_table::translated_byte_buffer, print, task::current_user_token};
 
 const FD_STDOUT: usize = 1;
 
