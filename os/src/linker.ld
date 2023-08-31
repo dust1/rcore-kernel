@@ -11,6 +11,12 @@ SECTIONS
     stext = .;
     .text : {
         *(.text.entry)
+        . = ALIGN(4K);
+        # 将trap.S这段代码放在一个物理页帧中,且__alltraps恰好位于这个物理页帧的开头
+        # 这段代码内核和应用都可以在他们各自的地址空间的最高虚拟页面上看到
+        strampoline = .;
+        *(.text.trampoline);
+        . = ALIGN(4K);
         *(.text .text.*)
     }
 

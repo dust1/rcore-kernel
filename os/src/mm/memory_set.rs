@@ -1,4 +1,8 @@
-use alloc::{collections::BTreeMap, vec::Vec};
+use core::arch::asm;
+
+use alloc::{collections::BTreeMap, sync::Arc, vec::Vec};
+use lazy_static::lazy_static;
+use riscv::register::satp;
 
 use crate::{
     config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE},
@@ -8,12 +12,13 @@ use crate::{
         page_table::PTEFlags,
     },
     println,
+    sync::up::UPSafeCell,
 };
 
 use super::{
-    address::{VPNRange, VirtAddr, VirtPageNum},
+    address::{PhysAddr, VPNRange, VirtAddr, VirtPageNum},
     frame_allocator::FrameTracker,
-    page_table::PageTable,
+    page_table::{PageTable, PageTableEntry},
 };
 
 /// 一段连续地址的虚拟内存
@@ -63,6 +68,12 @@ bitflags! {
         const X = 1 << 3;
         const U = 1 << 4;
     }
+}
+
+// 创建内核地址空间
+lazy_static! {
+    pub static ref KERNEL_SPACE: Arc<UPSafeCell<MemorySet>> =
+        Arc::new(unsafe { UPSafeCell::new(MemorySet::new_kernel()) });
 }
 
 //
@@ -302,8 +313,35 @@ impl MemorySet {
     }
 
     /// 跳板机制
-    pub fn map_trampoline(&self) {
-        todo!()
+    pub fn map_trampoline(&mut self) {
+        // 直接在多级页表中插入一个从地址空间的最高虚拟页面映射到跳板汇编代码所在的键值对
+        self.page_table.map(
+            VirtAddr::from(TRAMPOLINE).into(),
+            PhysAddr::from(strampoline as usize).into(),
+            PTEFlags::R | PTEFlags::X,
+        );
+    }
+
+    /// 启用SV39分页模式
+    ///
+    /// 同时在切换地址空间的时候也会调用到
+    pub fn activate(&self) {
+        let satp = self.page_table.token();
+        unsafe {
+            // 将构造的token写入satp CSR中, 此时SV39分页模式启用
+            satp::write(satp);
+            // 切换地址空间后清空快表,防止读取到过期的键值对
+            // TIPS: 快表用来加速MMU访问,系统先从快表中查询，如果没有命中则往三级缓存中查询
+            asm!("sfence.vma");
+        }
+    }
+
+    pub fn token(&self) -> usize {
+        self.page_table.token()
+    }
+
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+        self.page_table.translate(vpn)
     }
 }
 
@@ -407,4 +445,36 @@ impl MapArea {
         }
         page_table.unmap(vpn);
     }
+}
+
+pub fn remap_test() {
+    let mut kernel_space = KERNEL_SPACE.exclusive_access();
+    let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
+    let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
+    let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
+    assert_eq!(
+        kernel_space
+            .page_table
+            .translate(mid_text.floor())
+            .unwrap()
+            .writable(),
+        false
+    );
+    assert_eq!(
+        kernel_space
+            .page_table
+            .translate(mid_rodata.floor())
+            .unwrap()
+            .writable(),
+        false,
+    );
+    assert_eq!(
+        kernel_space
+            .page_table
+            .translate(mid_data.floor())
+            .unwrap()
+            .executable(),
+        false,
+    );
+    println!("remap_test passed!");
 }

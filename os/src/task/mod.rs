@@ -1,13 +1,17 @@
+use core::borrow::BorrowMut;
+
 use crate::{
     config::MAX_APP_NUM,
-    loader::get_num_app,
+    loader::{get_app_data, get_num_app},
     println,
     sync::up::UPSafeCell,
     task::{context::TaskContext, task::TaskStatus},
     timer::get_time_ms,
+    trap::context::TrapContext,
 };
 
 use self::{switch::__switch, task::TaskControlBlock};
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 mod context;
@@ -26,7 +30,7 @@ pub struct TaskManager {
 /// 任务管理器内部
 pub struct TaskManagerInner {
     // 任务列表
-    tasks: [TaskControlBlock; MAX_APP_NUM],
+    tasks: Vec<TaskControlBlock>,
     // 当前正在运行的任务id
     current_task: usize,
 }
@@ -34,27 +38,22 @@ pub struct TaskManagerInner {
 // 找到 link_app.S 中提供的符号 _num_app ，并从这里开始解析出应用数量以及各个应用的起始地址。
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
+        println!("init task mamager");
         let num_app = get_num_app();
-        let mut tasks = [TaskControlBlock {
-            task_status: TaskStatus::UnInit,
-            task_cx: TaskContext::zero_init(),
-            start_time: 0,
-            app_end_time: 0,
-            kernel_end_time: 0,
-        }; MAX_APP_NUM];
-        for (i, task) in tasks.iter_mut().enumerate() {
-            // TODO
-            // task.task_cx = TaskContext::goto_restore(init_app_cx(i));
-            task.task_status = TaskStatus::Ready;
+        println!("num_app = {}", num_app);
+        let mut tasks: Vec<TaskControlBlock> = Vec::new();
+        for i in 0..num_app {
+            tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
 
-        let task_manager_inner = TaskManagerInner {
-            tasks,
-            current_task: 0,
-        };
         let task_manager = TaskManager {
             num_app,
-            inner: unsafe { UPSafeCell::new(task_manager_inner) },
+            inner: unsafe {
+                UPSafeCell::new(TaskManagerInner {
+                    tasks,
+                    current_task: 0,
+                })
+            },
         };
 
         task_manager
@@ -67,7 +66,6 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
-        task0.start_time = get_time_ms();
 
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
 
@@ -137,12 +135,24 @@ impl TaskManager {
         let current = inner.current_task;
 
         inner.tasks[current].task_status = TaskStatus::Exited;
-        inner.tasks[current].kernel_end_time = get_time_ms();
-        println!(
-            "[kernel] Task PID: {}, start_time:{}, end_time:{}",
-            current, inner.tasks[current].start_time, inner.tasks[current].kernel_end_time
-        );
+        println!("[kernel] Task PID: {},", current,);
     }
+
+    fn get_current_token(&self) -> usize {
+        todo!()
+    }
+
+    fn get_current_cx(&self) -> &mut TrapContext {
+        todo!()
+    }
+}
+
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
+}
+
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    TASK_MANAGER.get_current_cx()
 }
 
 pub fn run_first_app() {

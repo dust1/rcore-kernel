@@ -2,7 +2,7 @@
 // 操作系统根据Trap相关的CSR寄存器内容，完成系统调用服务的分发与处理；
 // 操作系统完成系统调用服务后，需要恢复被打断的应用程序的Trap 上下文，并通 sret 让应用程序继续执行。
 
-use core::arch::global_asm;
+use core::arch::{asm, global_asm};
 
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
@@ -11,7 +11,11 @@ use riscv::register::{
 };
 
 use crate::{
-    println, syscall::syscall, task::suspend_current_and_run_next, timer::set_next_trigger,
+    config::{TRAMPOLINE, TRAP_CONTEXT},
+    println,
+    syscall::syscall,
+    task::{current_trap_cx, current_user_token, suspend_current_and_run_next},
+    timer::set_next_trigger,
 };
 
 use self::context::TrapContext;
@@ -40,11 +44,53 @@ pub fn enable_timer_interrupt() {
     }
 }
 
+fn set_kernel_trap_entry() {
+    unsafe {
+        stvec::write(trap_from_kernl as usize, TrapMode::Direct);
+    }
+}
+
+fn set_user_trap_entry() {
+    unsafe {
+        stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
+    }
+}
+
+#[no_mangle]
+pub fn trap_from_kernl() {
+    panic!("a trap from kernel!");
+}
+
+#[no_mangle]
+pub fn trap_return() -> ! {
+    set_user_trap_entry();
+    let trap_cx_ptr = TRAP_CONTEXT;
+    let user_satp = current_user_token();
+    extern "C" {
+        fn __alltraps();
+        fn __restore();
+    }
+    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    unsafe {
+        asm!(
+            "fence.i",
+            "jr {restore_va}",
+            restore_va = in(reg) restore_va,
+            in("a0") trap_cx_ptr,
+            in("a1") user_satp,
+            options(noreturn)
+        );
+    }
+    panic!("Unreachable  in back_to_user!!!");
+}
+
 /// 在S模式下被调用
 ///
 /// 当S/U模式下发起trap的时候会调用该函数进行分发和处理
 #[no_mangle]
-pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+pub fn trap_handler() -> ! {
+    set_kernel_trap_entry();
+    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
@@ -77,7 +123,6 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
                 stval
             );
         }
-    }
-
-    cx
+    };
+    trap_return()
 }
