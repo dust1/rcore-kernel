@@ -90,11 +90,11 @@ impl PageTable {
     pub fn new() -> Self {
         let frame = frame_alloc().unwrap();
         let ppn = frame.ppn;
-        let mut frames = Vec::new();
-        frames.push(frame);
+        let mut list = Vec::new();
+        list.push(frame);
         PageTable {
             root_ppn: ppn,
-            frames,
+            frames: list
         }
     }
 
@@ -148,7 +148,9 @@ impl PageTable {
             if !pte.is_valid() {
                 let frame = frame_alloc().unwrap();
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
+                println!("[Kernel Debug] tip 1");
                 self.frames.push(frame);
+                println!("[Kernel Debug] tip 2");
             }
             ppn = pte.ppn();
         }

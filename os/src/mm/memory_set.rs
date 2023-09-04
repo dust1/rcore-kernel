@@ -127,7 +127,6 @@ impl MemorySet {
             // 如果创建MapArea的时候有初始化数据，则将数据复制到物理地址
             map_area.copy_data(&mut self.page_table, data);
         }
-        println!("[Kernel Debug] map ok");
         self.areas.push(map_area);
     }
 
