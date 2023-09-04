@@ -1,10 +1,6 @@
 use crate::{
     config::{kernel_stack_position, TRAP_CONTEXT},
-    mm::{
-        address::{PhysPageNum, VirtAddr},
-        memory_set::{MapPermission, MemorySet, KERNEL_SPACE},
-    },
-    trap::{context::TrapContext, trap_handler},
+    trap::{context::TrapContext, trap_handler}, mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE, MapPermission},
 };
 
 use super::context::TaskContext;

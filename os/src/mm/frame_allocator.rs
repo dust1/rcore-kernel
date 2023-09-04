@@ -63,14 +63,14 @@ impl FrameAllocator for StackFrameAllocator {
     ///
     /// 如果有碎片化的空闲内存，则优先分配碎片化内存
     fn alloc(&mut self) -> Option<PhysPageNum> {
-        if let Some(usize) = self.recycled.pop() {
-            Some(usize.into())
+        if let Some(ppn) = self.recycled.pop() {
+            Some(ppn.into())
         } else if self.current == self.end {
             // 内存耗尽
             None
         } else {
             let ppn = self.current;
-            self.current -= 1;
+            self.current += 1;
             Some(ppn.into())
         }
     }

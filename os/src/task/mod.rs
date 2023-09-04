@@ -34,11 +34,12 @@ pub struct TaskManagerInner {
 // 找到 link_app.S 中提供的符号 _num_app ，并从这里开始解析出应用数量以及各个应用的起始地址。
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
-        println!("init task mamager");
+        println!("[Kernel] init task mamager...");
         let num_app = get_num_app();
-        println!("num_app = {}", num_app);
+        println!("[Kernel] load app size = {}", num_app);
         let mut tasks: Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app {
+            println!("[Kernek Debug] app num: {}", i);
             tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
 

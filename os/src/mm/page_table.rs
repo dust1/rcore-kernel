@@ -148,9 +148,7 @@ impl PageTable {
             if !pte.is_valid() {
                 let frame = frame_alloc().unwrap();
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
-                println!("[Kernel Debug] tip 1");
                 self.frames.push(frame);
-                println!("[Kernel Debug] tip 2");
             }
             ppn = pte.ppn();
         }

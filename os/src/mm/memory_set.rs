@@ -239,6 +239,8 @@ impl MemorySet {
 
         //将跳板插入到应用地址空间；
         memory_set.map_trampoline();
+
+        // 分析elf文件
         let elf = xmas_elf::ElfFile::new(elf_data).unwrap();
         let elf_header = elf.header;
         let magic = elf_header.pt1.magic;
@@ -274,6 +276,7 @@ impl MemorySet {
                     map_perm |= MapPermission::X;
                 }
 
+                println!("start va: {}, end_va: {}", start_va.0, end_va.0);
                 // 创建逻辑段 map_area
                 let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
                 max_end_vpn = map_area.vpn_range.get_end();
@@ -285,17 +288,19 @@ impl MemorySet {
                     Some(&elf.input[ph.offset() as usize..(ph.offset() + ph.file_size()) as usize]),
                 );
             }
+            println!("[Kernel Debug] pg count {} is ok", i);
         }
 
         // 开始处理用户栈
         let max_end_va: VirtAddr = max_end_vpn.into();
         let mut user_stack_bottom: usize = max_end_va.into();
 
-        // 只需紧接着在当前涉及到的最大虚拟页号上面再放置一个保护页面和用户栈即可。
+        // 空出一个栈帧,这个栈帧就是保护页面
         user_stack_bottom += PAGE_SIZE;
-        let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
 
-        // 在应用地址空间中映射次高页面来存放 Trap 上下文。
+        // 添加用户栈空间
+        let user_stack_top = user_stack_bottom + USER_STACK_SIZE;
+        // 在应用地址空间中映射次高页面来存放用户栈（Trap上下文）
         memory_set.push(
             MapArea::new(
                 user_stack_bottom.into(),
@@ -470,26 +475,20 @@ pub fn remap_test() {
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
     let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
     let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
-    assert!(
-        kernel_space
-            .page_table
-            .translate(mid_text.floor())
-            .unwrap()
-            .writable()
-    );
-    assert!(
-        kernel_space
-            .page_table
-            .translate(mid_rodata.floor())
-            .unwrap()
-            .writable(),
-    );
-    assert!(
-        kernel_space
-            .page_table
-            .translate(mid_data.floor())
-            .unwrap()
-            .executable(),
-    );
+    assert!(!kernel_space
+        .page_table
+        .translate(mid_text.floor())
+        .unwrap()
+        .writable(),);
+    assert!(!kernel_space
+        .page_table
+        .translate(mid_rodata.floor())
+        .unwrap()
+        .writable(),);
+    assert!(!kernel_space
+        .page_table
+        .translate(mid_data.floor())
+        .unwrap()
+        .executable(),);
     println!("remap_test passed!");
 }
