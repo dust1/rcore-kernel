@@ -41,8 +41,8 @@ pub fn heap_test() {
     for i in 0..500 {
         v.push(i);
     }
-    for i in 0..500 {
-        assert_eq!(v[i], i);
+    for (i, v) in v.iter().enumerate().take(500) {
+        assert_eq!(v, &i);
     }
     assert!(bss_range.contains(&(v.as_ptr() as usize)));
     drop(v);

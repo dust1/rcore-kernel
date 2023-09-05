@@ -1,3 +1,4 @@
+use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
 
@@ -90,11 +91,9 @@ impl PageTable {
     pub fn new() -> Self {
         let frame = frame_alloc().unwrap();
         let ppn = frame.ppn;
-        let mut list = Vec::new();
-        list.push(frame);
         PageTable {
             root_ppn: ppn,
-            frames: list,
+            frames: vec![frame],
         }
     }
 
@@ -138,8 +137,8 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
-        for i in 0..3 {
-            let pte = &mut ppn.get_pte_array()[idxs[i]];
+        for (i, idx) in idxs.iter().enumerate() {
+            let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
                 break;
@@ -164,8 +163,8 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
-        for i in 0..3 {
-            let pte = &mut ppn.get_pte_array()[idxs[i]];
+        for (i, idx) in idxs.iter().enumerate() {
+            let pte = &mut ppn.get_pte_array()[*idx];
             if i == 2 {
                 result = Some(pte);
                 break;

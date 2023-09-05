@@ -1,3 +1,8 @@
+mod context;
+mod switch;
+#[allow(clippy::module_inception)]
+mod task;
+
 use crate::{
     loader::{get_app_data, get_num_app},
     println,
@@ -10,10 +15,6 @@ use crate::{
 use self::{switch::__switch, task::TaskControlBlock};
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
-
-mod context;
-mod switch;
-mod task;
 
 /// 任务管理器
 ///
