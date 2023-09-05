@@ -1,6 +1,7 @@
 use crate::{
     loader::{get_app_data, get_num_app},
     println,
+    sbi::shutdown,
     sync::up::UPSafeCell,
     task::{context::TaskContext, task::TaskStatus},
     trap::context::TrapContext,
@@ -38,7 +39,6 @@ lazy_static! {
         println!("[kernel] init task mamager, total app size: {}", num_app);
         let mut tasks: Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app {
-            println!("[kernel] load app id = {} ", i);
             tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
 
@@ -60,19 +60,14 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
-        println!("[Kernel Debug] task cx: {:?}", task0.task_cx);
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
 
-        println!("[Kernel Debug] 1");
         drop(inner);
-        println!("[Kernel Debug] 2");
         // 创建一个空的上下文作为初始控制流
         let mut _unused = TaskContext::zero_init();
-        println!("[Kernel Debug] 3");
         unsafe {
             __switch(&mut _unused as *mut _, next_task_cx_ptr);
         }
-        println!("[Kernel Debug] 4");
         panic!("unreachable in run_first_task!")
     }
 
@@ -101,7 +96,8 @@ impl TaskManager {
             // 返回用户态
         } else {
             // 当所有任务结束的时候,并不会调用__switch,这会导致这个任务对应的调用栈里的栈空间无法再使用
-            panic!("All application completed!")
+            println!("[Kernel] all task completed!");
+            shutdown(false);
         }
     }
 

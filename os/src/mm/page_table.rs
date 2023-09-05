@@ -94,7 +94,7 @@ impl PageTable {
         list.push(frame);
         PageTable {
             root_ppn: ppn,
-            frames: list
+            frames: list,
         }
     }
 

@@ -32,7 +32,7 @@ __alltraps:
     # 将内核栈地址(token)加载到t0
     ld t0, 34*8(sp)
     # 将trap handler入口地址加载到t1
-    ld t1, 34*8(sp)
+    ld t1, 36*8(sp)
     # 将sp修改为应用内核栈顶的地址
     ld sp, 35*8(sp)
     # 将 satp 修改为内核地址空间的 token 并使用 sfence.vma 刷新快表，这就切换到了内核地址空间；

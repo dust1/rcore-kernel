@@ -154,9 +154,18 @@ impl MemorySet {
         let mut memory_set = Self::new_bare();
         memory_set.map_trampoline();
         // 映射内核部分
-        println!("[kernel] .text [{:#x}, {:#x})", stext as usize, etext as usize);
-        println!("[kernel] .rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        println!("[kernel] .data [{:#x}, {:#x})", sdata as usize, edata as usize);
+        println!(
+            "[kernel] .text [{:#x}, {:#x})",
+            stext as usize, etext as usize
+        );
+        println!(
+            "[kernel] .rodata [{:#x}, {:#x})",
+            srodata as usize, erodata as usize
+        );
+        println!(
+            "[kernel] .data [{:#x}, {:#x})",
+            sdata as usize, edata as usize
+        );
         println!(
             "[kernel] .bss [{:#x}, {:#x})",
             sbss_with_stack as usize, ebss as usize
@@ -329,7 +338,6 @@ impl MemorySet {
     ///
     /// 同时在切换地址空间的时候也会调用到
     pub fn activate(&self) {
-        println!("[Kernel Debug] activate");
         let satp = self.page_table.token();
         unsafe {
             // 将构造的token写入satp CSR中, 此时SV39分页模式启用
@@ -346,7 +354,7 @@ impl MemorySet {
     }
 
     /// 尝试根据虚拟页号寻找页表项
-    /// 
+    ///
     /// 如果找不到则返回None
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)

@@ -14,38 +14,25 @@ const SBI_SHUTDOWN: usize = 8;
 use core::arch::asm;
 
 /// 关机
-pub fn shutdown() -> ! {
-    sbi_call(SBI_SHUTDOWN, 0, 0, 0);
-    panic!("It should shutdown!");
+pub fn shutdown(failure: bool) -> ! {
+    use sbi_rt::{system_reset, NoReason, Shutdown, SystemFailure};
+    if !failure {
+        system_reset(Shutdown, NoReason);
+    } else {
+        system_reset(Shutdown, SystemFailure);
+    }
+    unreachable!()
 }
 
 /// 屏幕输出
 pub fn console_putchar(c: usize) {
-    sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
+    #[allow(deprecated)]
+    sbi_rt::legacy::console_putchar(c);
 }
 
 /// 设置mtimecmp的值
 ///
 /// mtimecmp：一旦计数器mtime的值超过了mtimecmp，就会触发一次时钟中断
 pub fn set_timer(timer: usize) {
-    sbi_call(SBI_SET_TIMER, timer, 0, 0);
-}
-
-/// which 表示请求RustSBI的服务的类型
-/// arg0 ~ arg2 表示传递给RustSBI的3个参数
-#[inline(always)]
-fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
-    let mut ret;
-    // 此处由S模式陷入到M模式,并调用SBI提供的二进制汇编机器码接口
-    unsafe {
-        asm!(
-            "ecall",
-            inlateout("x10") arg0 => ret,
-            in("x11") arg1,
-            in("x12") arg2,
-            in("x17") which,
-        );
-    }
-
-    ret
+    sbi_rt::set_timer(timer as _);
 }

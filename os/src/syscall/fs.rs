@@ -1,4 +1,4 @@
-use crate::{print, task::current_user_token, mm::translated_byte_buffer};
+use crate::{mm::translated_byte_buffer, print, task::current_user_token};
 
 const FD_STDOUT: usize = 1;
 
