@@ -1,8 +1,6 @@
-use core::arch::global_asm;
+core::arch::global_asm!(include_str!("switch.S"));
 
 use super::context::TaskContext;
-
-global_asm!(include_str!("switch.S"));
 
 // 将汇编代码中的全局符号__switch解释为一个RUST函数
 extern "C" {

@@ -34,16 +34,13 @@ pub struct TaskManagerInner {
 // 找到 link_app.S 中提供的符号 _num_app ，并从这里开始解析出应用数量以及各个应用的起始地址。
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
-        println!("[Kernel] init task mamager...");
         let num_app = get_num_app();
-        println!("[Kernel] load app size = {}", num_app);
+        println!("[kernel] init task mamager, total app size: {}", num_app);
         let mut tasks: Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app {
-            println!("[Kernek Debug] app num: {}", i);
+            println!("[kernel] load app id = {} ", i);
             tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
-
-        
 
         TaskManager {
             num_app,
@@ -63,15 +60,19 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
-
+        println!("[Kernel Debug] task cx: {:?}", task0.task_cx);
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
 
+        println!("[Kernel Debug] 1");
         drop(inner);
+        println!("[Kernel Debug] 2");
         // 创建一个空的上下文作为初始控制流
         let mut _unused = TaskContext::zero_init();
+        println!("[Kernel Debug] 3");
         unsafe {
-            __switch(&mut _unused as *mut TaskContext, next_task_cx_ptr);
+            __switch(&mut _unused as *mut _, next_task_cx_ptr);
         }
+        println!("[Kernel Debug] 4");
         panic!("unreachable in run_first_task!")
     }
 
@@ -135,12 +136,18 @@ impl TaskManager {
         println!("[kernel] Task PID: {},", current,);
     }
 
+    /// 获得当前正在执行的应用的地址空间的 token
     fn get_current_token(&self) -> usize {
-        todo!()
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].get_user_token()
     }
 
+    /// 获得当前正在执行的应用的Trap上下文
     fn get_current_cx(&self) -> &mut TrapContext {
-        todo!()
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].get_trap_cx()
     }
 }
 

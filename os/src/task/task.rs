@@ -70,6 +70,11 @@ impl TaskControlBlock {
         task_control_block
     }
 
+    /// 查找应用的地址空间
+    pub fn get_user_token(&self) -> usize {
+        self.memory_set.token()
+    }
+
     /// 查找该应用的Trap上下文
     pub fn get_trap_cx(&self) -> &'static mut TrapContext {
         self.trap_cx_ppn.get_mut()

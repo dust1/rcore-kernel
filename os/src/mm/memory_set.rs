@@ -154,15 +154,15 @@ impl MemorySet {
         let mut memory_set = Self::new_bare();
         memory_set.map_trampoline();
         // 映射内核部分
-        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
+        println!("[kernel] .text [{:#x}, {:#x})", stext as usize, etext as usize);
+        println!("[kernel] .rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+        println!("[kernel] .data [{:#x}, {:#x})", sdata as usize, edata as usize);
         println!(
-            ".bss [{:#x}, {:#x})",
+            "[kernel] .bss [{:#x}, {:#x})",
             sbss_with_stack as usize, ebss as usize
         );
 
-        println!("mapping .text section");
+        println!("[kernel] mapping .text section");
         memory_set.push(
             MapArea::new(
                 (stext as usize).into(),
@@ -173,7 +173,7 @@ impl MemorySet {
             None,
         );
 
-        println!("mapping .rodata section");
+        println!("[kernel] mapping .rodata section");
         memory_set.push(
             MapArea::new(
                 (srodata as usize).into(),
@@ -184,7 +184,7 @@ impl MemorySet {
             None,
         );
 
-        println!("mapping .data section");
+        println!("[kernel] mapping .data section");
         memory_set.push(
             MapArea::new(
                 (sdata as usize).into(),
@@ -195,7 +195,7 @@ impl MemorySet {
             None,
         );
 
-        println!("mapping .bss section");
+        println!("[kernel] mapping .bss section");
         memory_set.push(
             MapArea::new(
                 (sbss_with_stack as usize).into(),
@@ -206,7 +206,7 @@ impl MemorySet {
             None,
         );
 
-        println!("mapping physcial memory");
+        println!("[kernel] mapping physcial memory");
         memory_set.push(
             MapArea::new(
                 (ekernel as usize).into(),
@@ -216,19 +216,6 @@ impl MemorySet {
             ),
             None,
         );
-
-        // println!("mapping memory-mapped registers");
-        // for pair in MMIO {
-        //     memory_set.push(
-        //         MapArea::new(
-        //             (*pair).0.into(),
-        //             ((*pair).0 + (*pair).1).into(),
-        //             MapType::Identical,
-        //             MapPermission::R | MapPermission::W,
-        //         ),
-        //         None,
-        //     );
-        // }
 
         memory_set
     }
@@ -276,7 +263,6 @@ impl MemorySet {
                     map_perm |= MapPermission::X;
                 }
 
-                println!("start va: {}, end_va: {}", start_va.0, end_va.0);
                 // 创建逻辑段 map_area
                 let map_area = MapArea::new(start_va, end_va, MapType::Framed, map_perm);
                 max_end_vpn = map_area.vpn_range.get_end();
@@ -288,7 +274,6 @@ impl MemorySet {
                     Some(&elf.input[ph.offset() as usize..(ph.offset() + ph.file_size()) as usize]),
                 );
             }
-            println!("[Kernel Debug] pg count {} is ok", i);
         }
 
         // 开始处理用户栈
@@ -355,10 +340,14 @@ impl MemorySet {
         }
     }
 
+    /// 获取应用地址空间
     pub fn token(&self) -> usize {
         self.page_table.token()
     }
 
+    /// 尝试根据虚拟页号寻找页表项
+    /// 
+    /// 如果找不到则返回None
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
     }
@@ -490,5 +479,5 @@ pub fn remap_test() {
         .translate(mid_data.floor())
         .unwrap()
         .executable(),);
-    println!("remap_test passed!");
+    println!("[kernel test] remap_test passed!");
 }

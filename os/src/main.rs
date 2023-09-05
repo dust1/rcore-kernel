@@ -34,11 +34,11 @@ global_asm!(include_str!("link_app.S"));
 #[no_mangle]
 pub fn rust_main() -> ! {
     clear_bss();
-    println!("[Kernel] clear bss was ok...");
+    println!("[kernel] clear bss was ok...");
     mm::init();
-    println!("[Kernel] init memory was ok...");
+    println!("[kernel] init memory was ok...");
     mm::remap_test();
-    println!("[Kernel] memory test all pass...");
+    println!("[kernel] memory test all pass...");
     // S模式运行
     trap::init();
     // 设置S特权级的时钟中断不会被屏蔽
