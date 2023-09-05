@@ -79,7 +79,7 @@ impl FrameAllocator for StackFrameAllocator {
     ///
     /// 先要检查ppn的合法性，然后将其作为碎片化的内存进行回收管理
     fn dealloc(&mut self, ppn: PhysPageNum) {
-        if self.recycled.iter().any(|v| ppn.0.eq(&v)) {
+        if self.recycled.iter().any(|v| ppn.0.eq(v)) {
             panic!("valid ppn {}", ppn.0)
         }
         self.recycled.push(ppn.0);
