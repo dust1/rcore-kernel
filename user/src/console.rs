@@ -1,9 +1,12 @@
+use crate::read;
+
 use super::write;
 use core::fmt::{self, Write};
 
 struct Stdout;
 
 const STDOUT: usize = 1;
+const STDIN: usize = 0;
 
 impl Write for Stdout {
     fn write_str(&mut self, s: &str) -> fmt::Result {
@@ -12,6 +15,14 @@ impl Write for Stdout {
     }
 }
 
+/// 从标准输入中取出一个字符
+pub fn getchar() -> u8 {
+    let mut c = [0u8; 1];
+    read(STDIN, &mut c);
+    c[0]
+}
+
+/// 标准输出
 pub fn print(args: fmt::Arguments) {
     Stdout.write_fmt(args).unwrap();
 }
