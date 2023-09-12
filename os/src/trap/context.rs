@@ -1,6 +1,9 @@
 use riscv::register::sstatus::{self, Sstatus, SPP};
 
 /// Trap上下文
+/// 
+/// 保存程序执行过程中相应的寄存器数据以及地址空间
+/// 
 /// 在Trap发生时保存物理资源内容
 #[repr(C)]
 pub struct TrapContext {

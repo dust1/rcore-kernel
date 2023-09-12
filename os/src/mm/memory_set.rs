@@ -146,6 +146,10 @@ impl MemorySet {
         );
     }
 
+    pub fn remove_area_with_start_vpn(&mut self, vpn: VirtAddr) {
+        todo!()
+    }
+
     /// 生成内核的地址空间
     ///
     /// new_kernel 将映射跳板和地址空间中最低256GiB中的内核逻辑段
