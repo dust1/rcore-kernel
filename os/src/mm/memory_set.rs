@@ -146,8 +146,17 @@ impl MemorySet {
         );
     }
 
-    pub fn remove_area_with_start_vpn(&mut self, vpn: VirtAddr) {
-        todo!()
+    /// 将指定的起始地址所在的地址空间移除
+    pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPageNum) {
+        if let Some((idx, area)) = self
+            .areas
+            .iter_mut()
+            .enumerate()
+            .find(|(_, area)| area.vpn_range.get_start() == start_vpn)
+        {
+            area.unmap(&mut self.page_table);
+            self.areas.remove(idx);
+        }
     }
 
     /// 生成内核的地址空间
@@ -363,6 +372,34 @@ impl MemorySet {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
     }
+
+    /// 复制一个完全相同的地址空间
+    pub fn from_existed_user(user_space: &MemorySet) -> MemorySet {
+        // 创建一个新的地址空间
+        let mut memory_set = MemorySet::new_bare();
+
+        // 将这个地址空间映射到跳板页面
+        memory_set.map_trampoline();
+
+        // 遍历原地址的逻辑段，将逻辑段以及对应的数据复制到新的地址空间
+        for area in user_space.areas.iter() {
+            let new_area = MapArea::from_another(area);
+            memory_set.push(new_area, None);
+            for vpn in area.vpn_range {
+                let src_ppn = user_space.translate(vpn).unwrap().ppn();
+                let dst_ppn = memory_set.translate(vpn).unwrap().ppn();
+                dst_ppn
+                    .get_bytes_array()
+                    .copy_from_slice(src_ppn.get_bytes_array());
+            }
+        }
+        memory_set
+    }
+
+    /// 回收数据页
+    pub fn recycle_data_page(&mut self) {
+        self.areas.clear();
+    }
 }
 
 impl MapArea {
@@ -465,6 +502,18 @@ impl MapArea {
             self.data_frames.remove(&vpn);
         }
         page_table.unmap(vpn);
+    }
+
+    /// 从一个逻辑段复制得到一个虚拟地址区间、映射方式和权限控制均相同的逻辑段
+    ///
+    /// 由于它还没有被真正映射到物理帧上,所以data_frames为空
+    pub fn from_another(another: &MapArea) -> Self {
+        Self {
+            vpn_range: VPNRange::new(another.vpn_range.get_start(), another.vpn_range.get_end()),
+            data_frames: BTreeMap::new(),
+            map_type: another.map_type,
+            map_perm: another.map_perm,
+        }
     }
 }
 

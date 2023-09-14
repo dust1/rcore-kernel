@@ -36,7 +36,6 @@ pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
 
-
 /// 函数符号main标志为弱链接，当链接的时候该main函数处于次优先级
 /// 使用#![feature(linkage)]来保证此功能的可用
 #[linkage = "weak"]
@@ -100,4 +99,15 @@ pub fn yield_() -> isize {
 
 pub fn get_time() -> isize {
     sys_get_time()
+}
+
+pub fn getpid() -> isize {
+    sys_getpid()
+}
+
+pub fn sleep(period_ms: usize) {
+    let start = sys_get_time();
+    while sys_get_time() < start + period_ms as isize {
+        sys_yield();
+    }
 }

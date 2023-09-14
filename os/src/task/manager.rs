@@ -30,6 +30,7 @@ lazy_static! {
         unsafe { UPSafeCell::new(TaskManager::new()) };
 }
 
+/// 向任务管理器中添加一个任务
 pub fn add_task(task: Arc<TaskControlBlock>) {
     TASK_MANAGER.exclusive_access().add(task);
 }

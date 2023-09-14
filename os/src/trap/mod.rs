@@ -14,7 +14,9 @@ use crate::{
     config::{TRAMPOLINE, TRAP_CONTEXT},
     println,
     syscall::syscall,
-    task::{current_trap_cx, current_user_token, suspend_current_and_run_next},
+    task::{processor::{
+        current_task, current_trap_cx, current_user_token, suspend_current_and_run_next,
+    }, exit_current_and_run_next},
     timer::set_next_trigger,
 };
 
@@ -87,26 +89,40 @@ pub fn trap_return() -> ! {
 #[no_mangle]
 pub fn trap_handler() -> ! {
     set_kernel_trap_entry();
-    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
         // 来自U特权级的ecall调用(系统调用)
         Trap::Exception(Exception::UserEnvCall) => {
+            let mut cx = current_trap_cx();
             // U特权发起系统调用后sepc寄存器保存的是ecall指令地址,我们希望trap返回后应用程序控制流从ecall的下一条指令开始执行
             // 因此我们增加sepc的长度,4就是ecall指令的码长(4字节)
             cx.sepc += 4;
             // 从a7(x17)寄存器读取syscall的ID
             // 从a0~a2(x10~x12)寄存器读取本次syscall的参数
-            cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+            let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
+
+            // 原来的cx会被回收，需要重新获取
+            cx = current_trap_cx();
+            cx.x[10] = result as usize;
         }
-        Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
-            println!("[kernel] PageFault in application, kernel killed it.");
-            panic!("[kernel] Cannot continue")
+        Trap::Exception(Exception::StoreFault)
+        | Trap::Exception(Exception::StorePageFault)
+        | Trap::Exception(Exception::LoadFault)
+        | Trap::Exception(Exception::LoadPageFault)
+        | Trap::Exception(Exception::InstructionFault)
+        | Trap::Exception(Exception::InstructionPageFault) => {
+            println!(
+                "[kernel] {:?} in application, bad addr = {:#x}, bad instruction = {:#x}, core dumped.",
+                scause.cause(),
+                stval,
+                current_trap_cx().sepc,
+            );
+            exit_current_and_run_next(-2);
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            println!("[kernel] IllegalInstruction in application, kernel killed it.");
-            panic!("[kernel] Cannot continue")
+            println!("[kernel] IllegalInstruction in application, core dumped.");
+            exit_current_and_run_next(-3);
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             println!("[kernel] SupervisorTimer!!!");

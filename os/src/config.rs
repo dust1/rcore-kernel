@@ -8,6 +8,8 @@ pub const PAGE_SIZE: usize = 0x1000;
 pub const PAGE_SIZE_BITS: usize = 0xc;
 
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
+
+// TrapContext在每个应用的地址空间中所在的地址
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 
 pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {

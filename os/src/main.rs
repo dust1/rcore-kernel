@@ -38,6 +38,7 @@ pub fn rust_main() -> ! {
     mm::init();
     println!("[kernel] init memory was ok...");
     mm::remap_test();
+    task::add_initproce();
     println!("[kernel] memory test all pass...");
     // S模式运行
     trap::init();
@@ -45,7 +46,8 @@ pub fn rust_main() -> ! {
     trap::enable_timer_interrupt();
     // 设置第一个10ms计时器
     timer::set_next_trigger();
-    task::run_first_app();
+    loader::list_apps();
+    task::run_tasks();
     panic!("Unreachable in rust_main!")
 }
 

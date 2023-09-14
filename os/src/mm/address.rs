@@ -173,6 +173,11 @@ impl PhysAddr {
             PhysPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE)
         }
     }
+
+    /// 从这个物理地址中获取指定类型的指针
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
 }
 
 impl PhysPageNum {

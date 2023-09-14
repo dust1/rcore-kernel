@@ -1,7 +1,8 @@
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{string::String, vec};
 use bitflags::*;
 
+use super::PhysAddr;
 use super::{
     address::{PhysPageNum, StepByOne, VirtAddr, VirtPageNum},
     frame_allocator::{frame_alloc, FrameTracker},
@@ -125,6 +126,19 @@ impl PageTable {
         }
     }
 
+    /// 根据虚拟地址查询页表中对应的物理地址
+    pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
+        self.find_pte(va.clone().floor()).map(|pte| {
+            // 根据虚拟页号获取物理页号对应的起始物理地址
+            let aligned_pa: PhysAddr = pte.ppn().into();
+            // 获取原始物理地址的偏移量
+            let offet = va.page_offset();
+            let aligned_pa_usize: usize = aligned_pa.into();
+
+            (aligned_pa_usize + offet).into()
+        })
+    }
+
     /// 如果能够找到页表项，那么它会将页表项拷贝一份并返回，否则就返回一个 None 。
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.find_pte(vpn).map(|pte| *pte)
@@ -187,7 +201,8 @@ impl PageTable {
     }
 }
 
-pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static [u8]> {
+/// 从用户空间中根据指定地址和长度获取一段二进制数据
+pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
     let page_table = PageTable::from_token(token);
     let mut start = ptr as usize;
     let end = start + len;
@@ -200,11 +215,41 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
         let mut end_va: VirtAddr = vpn.into();
         end_va = end_va.min(VirtAddr::from(end));
         if end_va.page_offset() == 0 {
-            v.push(&ppn.get_bytes_array()[start_va.page_offset()..]);
+            v.push(&mut ppn.get_bytes_array()[start_va.page_offset()..]);
         } else {
-            v.push(&ppn.get_bytes_array()[start_va.page_offset()..end_va.page_offset()]);
+            v.push(&mut ppn.get_bytes_array()[start_va.page_offset()..end_va.page_offset()]);
         }
         start = end_va.into();
     }
     v
+}
+
+/// 从应用的用户态地址空间中拿到一个字符串
+pub fn translated_str(token: usize, ptr: *const u8) -> String {
+    let page_table = PageTable::from_token(token);
+    let mut string = String::new();
+    let mut va = ptr as usize;
+    loop {
+        let ch: u8 = *(page_table
+            .translate_va(VirtAddr::from(va))
+            .unwrap()
+            .get_mut());
+        if ch == 0 {
+            break;
+        } else {
+            string.push(ch as char);
+            va += 1;
+        }
+    }
+    string
+}
+
+/// 从应用的用户态地址空间中拿到一个可变类型引用
+pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
+    let page_table = PageTable::from_token(token);
+    let va = ptr as usize;
+    page_table
+        .translate_va(VirtAddr::from(va))
+        .unwrap()
+        .get_mut()
 }

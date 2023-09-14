@@ -1,11 +1,11 @@
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 
-use crate::{sync::UPSafeCell, trap::context::TrapContext};
+use crate::{sync::UPSafeCell, task::INITPROC, trap::context::TrapContext};
 
 use super::{
     context::TaskContext,
-    manager::fetch_task,
+    manager::{add_task, fetch_task},
     switch::__switch,
     task::{TaskControlBlock, TaskStatus},
 };
@@ -59,14 +59,56 @@ pub fn current_user_token() -> usize {
     token
 }
 
+// 退出当前任务并执行下一个任务
+pub fn exit_current_and_run_next(exit_code: i32) {
+    let task = task_current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    inner.task_status = TaskStatus::Zombie;
+    inner.exit_code = exit_code;
+
+    {
+        let mut initproc_inner = INITPROC.inner_exclusive_access();
+        // 将要结束的进程的子进程挂靠到初始进程中
+        for child in inner.children.iter() {
+            child.inner_exclusive_access().parent = Some(Arc::downgrade(&INITPROC));
+            initproc_inner.children.push(child.clone());
+        }
+    }
+
+    inner.children.clear();
+    inner.memory_set.recycle_data_page();
+    drop(inner);
+    drop(task);
+
+    let mut _unused = TaskContext::zero_init();
+    schedule(&mut _unused as *mut _);
+}
+
+/// 暂停当前的应用并切换到下一个应用
+pub fn suspend_current_and_run_next() {
+    // 获取当前正在运行的任务
+    let task = task_current_task().unwrap();
+
+    let mut task_inner = task.inner_exclusive_access();
+    let task_cx_ptr = &mut task_inner.task_cx as *mut TaskContext;
+
+    task_inner.task_status = TaskStatus::Ready;
+    drop(task_inner);
+
+    // 放入进程管理队列末尾
+    add_task(task);
+    schedule(task_cx_ptr);
+}
+
 /// 获取当前正在执行的任务的应用的Trap上下文
-pub fn current_task_cx() -> &'static mut TrapContext {
+pub fn current_trap_cx() -> &'static mut TrapContext {
     current_task()
         .unwrap()
         .inner_exclusive_access()
         .get_trap_cx()
 }
 
+/// 运行任务
 pub fn run_tasks() {
     loop {
         let mut processor = PROCESSOR.exclusive_access();
@@ -93,6 +135,8 @@ pub fn run_tasks() {
 }
 
 /// 切换任务上下文
+///
+/// switched_task_cx_ptr: 带切换出去的任务上下文
 pub fn schedule(switchded_task_cx_ptr: *mut TaskContext) {
     let mut processor = PROCESSOR.exclusive_access();
     let idle_task_cx_ptr = processor.get_idle_task_cx_ptr();

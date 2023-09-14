@@ -32,7 +32,7 @@ impl KernelStack {
         let pid = pid_handle.0;
         // 根据标识符计算内核栈在内核地址空间中的位置
         let (kernel_stack_bottom, kernel_stack_top) = kernel_stack_position(pid);
-        // 将逻辑段插入到内核地址空间中
+        // 将逻辑段插入到内核地址空间中根据pid创建该任务应该所在的地址空间范围[kernel_stack_bottom, kernel_stack_top)
         KERNEL_SPACE.exclusive_access().insert_framed_area(
             kernel_stack_bottom.into(),
             kernel_stack_top.into(),
