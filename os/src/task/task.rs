@@ -6,7 +6,7 @@ use alloc::{
 };
 
 use crate::{
-    config::{TRAP_CONTEXT},
+    config::TRAP_CONTEXT,
     mm::{MemorySet, PhysPageNum, VirtAddr, KERNEL_SPACE},
     sync::UPSafeCell,
     trap::{context::TrapContext, trap_handler},

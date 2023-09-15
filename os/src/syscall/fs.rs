@@ -3,7 +3,7 @@ use sbi_rt::legacy::console_getchar;
 use crate::{
     mm::translated_byte_buffer,
     print,
-    task::{processor::{current_user_token, suspend_current_and_run_next}},
+    task::processor::{current_user_token, suspend_current_and_run_next},
 };
 
 const FD_STDOUT: usize = 1;

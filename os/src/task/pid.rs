@@ -91,7 +91,7 @@ impl PidAllocator {
 
     pub fn dealloc(&mut self, pid: usize) {
         assert!(pid < self.current);
-        if self.recycled.iter().any(|p| pid.eq(&p)) {
+        if self.recycled.iter().any(|p| pid.eq(p)) {
             println!("[Kernel] pid: {} was dealloc!", pid);
         } else {
             self.recycled.push(pid);

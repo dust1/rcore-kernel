@@ -14,9 +14,10 @@ use crate::{
     config::{TRAMPOLINE, TRAP_CONTEXT},
     println,
     syscall::syscall,
-    task::{processor::{
-        current_trap_cx, current_user_token, suspend_current_and_run_next,
-    }, exit_current_and_run_next},
+    task::{
+        exit_current_and_run_next,
+        processor::{current_trap_cx, current_user_token, suspend_current_and_run_next},
+    },
     timer::set_next_trigger,
 };
 

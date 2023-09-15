@@ -6,16 +6,14 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
-use crate::{
-    loader::{get_app_data_by_name},
-};
+use crate::loader::get_app_data_by_name;
 
 pub use processor::{
     current_task, exit_current_and_run_next, run_tasks, schedule, task_current_task,
 };
 
 use self::{manager::add_task, task::TaskControlBlock};
-use alloc::{sync::Arc};
+use alloc::sync::Arc;
 use lazy_static::lazy_static;
 
 lazy_static! {

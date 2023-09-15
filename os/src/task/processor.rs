@@ -42,6 +42,12 @@ impl Processor {
     }
 }
 
+impl Default for Processor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// 取出当前正在执行的任务
 pub fn task_current_task() -> Option<Arc<TaskControlBlock>> {
     PROCESSOR.exclusive_access().task_current()

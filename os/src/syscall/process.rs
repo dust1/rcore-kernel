@@ -74,7 +74,8 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
     let mut inner = task.inner_exclusive_access();
     if !inner
         .children
-        .iter().any(|p| pid == -1 || pid as usize == p.getpid())
+        .iter()
+        .any(|p| pid == -1 || pid as usize == p.getpid())
     {
         return -1;
     }
