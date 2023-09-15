@@ -1,4 +1,4 @@
-use core::ops::Index;
+
 
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
@@ -14,7 +14,7 @@ lazy_static! {
         unsafe {
             for _ in 0..num_app {
                 let mut end = start;
-                while end.read_volatile() != '\0' as u8 {
+                while end.read_volatile() != b'\0' {
                     // 读取一个字符
                     end = end.add(1);
                 }

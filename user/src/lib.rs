@@ -5,7 +5,6 @@
 
 #[macro_use]
 pub mod console;
-mod exec;
 mod lang_items;
 mod syscall;
 

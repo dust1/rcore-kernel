@@ -7,20 +7,15 @@ mod switch;
 mod task;
 
 use crate::{
-    loader::{get_app_data, get_app_data_by_name, get_num_app},
-    println,
-    sbi::shutdown,
-    sync::up::UPSafeCell,
-    task::{context::TaskContext, task::TaskStatus},
-    trap::context::TrapContext,
+    loader::{get_app_data_by_name},
 };
 
 pub use processor::{
     current_task, exit_current_and_run_next, run_tasks, schedule, task_current_task,
 };
 
-use self::{manager::add_task, switch::__switch, task::TaskControlBlock};
-use alloc::{sync::Arc, vec::Vec};
+use self::{manager::add_task, task::TaskControlBlock};
+use alloc::{sync::Arc};
 use lazy_static::lazy_static;
 
 lazy_static! {

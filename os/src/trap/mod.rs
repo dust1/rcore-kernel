@@ -15,7 +15,7 @@ use crate::{
     println,
     syscall::syscall,
     task::{processor::{
-        current_task, current_trap_cx, current_user_token, suspend_current_and_run_next,
+        current_trap_cx, current_user_token, suspend_current_and_run_next,
     }, exit_current_and_run_next},
     timer::set_next_trigger,
 };
@@ -104,7 +104,7 @@ pub fn trap_handler() -> ! {
 
             // 原来的cx会被回收，需要重新获取
             cx = current_trap_cx();
-            cx.x[10] = result as usize;
+            cx.x[10] = result;
         }
         Trap::Exception(Exception::StoreFault)
         | Trap::Exception(Exception::StorePageFault)
