@@ -1,5 +1,7 @@
 use core::arch::asm;
 
+const SYSCALL_OPEN: usize = 56;
+const SYSCALL_CLOSE: usize = 57;
 const SYSCALL_READ: usize = 63;
 const SYSCALL_WRITE: usize = 64;
 const SYSCALL_EXIT: usize = 93;
@@ -92,4 +94,23 @@ pub fn sys_exit(exit_code: i32) -> isize {
 /// syscall ID：124
 pub fn sys_yield() -> isize {
     syscall(SYSCALL_YIELD, [0, 0, 0])
+}
+
+/// 功能：打开一个常规文件，并返回可以访问它的文件描述符。
+/// 参数：path 描述要打开的文件的文件名（简单起见，文件系统不需要支持目录，所有的文件都放在根目录 / 下），
+/// flags 描述打开文件的标志，具体含义下面给出。
+/// 返回值：如果出现了错误则返回 -1，否则返回打开常规文件的文件描述符。可能的错误原因是：文件不存在。
+/// syscall ID：56\
+///
+// 如果 flags 为 0，则表示以只读模式 RDONLY 打开；
+// 如果 flags 第 0 位被设置（0x001），表示以只写模式 WRONLY 打开；
+// 如果 flags 第 1 位被设置（0x002），表示既可读又可写 RDWR ；
+// 如果 flags 第 9 位被设置（0x200），表示允许创建文件 CREATE ，在找不到该文件的时候应创建文件；如果该文件已经存在则应该将该文件的大小归零；
+// 如果 flags 第 10 位被设置（0x400），则在打开文件的时候应该清空文件的内容并将该文件的大小归零，也即 TRUNC 。
+pub fn sys_open(path: &str, flags: u32) -> isize {
+    syscall(SYSCALL_OPEN, [path.as_ptr() as usize, flags as usize, 0])
+}
+
+pub fn sys_close(fd: usize) -> isize {
+    syscall(SYSCALL_CLOSE, [fd, 0, 0])
 }
