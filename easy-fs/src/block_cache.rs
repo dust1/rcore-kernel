@@ -1,6 +1,11 @@
-use alloc::sync::Arc;
+use alloc::{collections::VecDeque, sync::Arc};
+use lazy_static::lazy_static;
+use spin::Mutex;
 
 use crate::{block_dev::BlockDevice, BLOCK_SZ};
+
+/// 内存中同时能够驻留的最大数据块数量
+const BLOCK_CACHE_SIZE: usize = 16;
 
 /// 块缓存
 pub struct BlockCache {
@@ -12,6 +17,10 @@ pub struct BlockCache {
     block_device: Arc<dyn BlockDevice>,
     // 记录这个块从磁盘载入内存后有没有被修改过
     modified: bool,
+}
+
+pub struct BlockCacheManager {
+    queue: VecDeque<(usize, Arc<Mutex<BlockCache>>)>,
 }
 
 impl BlockCache {
@@ -85,4 +94,58 @@ impl Drop for BlockCache {
     fn drop(&mut self) {
         self.sync();
     }
+}
+
+impl BlockCacheManager {
+    pub fn new() -> Self {
+        Self {
+            queue: VecDeque::new(),
+        }
+    }
+
+    pub fn get_block_cache(
+        &mut self,
+        block_id: usize,
+        block_device: Arc<dyn BlockDevice>,
+    ) -> Arc<Mutex<BlockCache>> {
+        if let Some((_, block)) = self.queue.iter().find(|(id, _)| block_id.eq(id)) {
+            return Arc::clone(block);
+        }
+
+        if self.queue.len() >= BLOCK_CACHE_SIZE {
+            // 由于外部可能还在使用块，因此需要查询到强引用为1的数据块，并将其移除
+            // 强引用为1：没有其他部分使用到这个块
+            if let Some((idx, _)) = self
+                .queue
+                .iter()
+                .enumerate()
+                .find(|(_, (_, block))| Arc::strong_count(block) == 1)
+            {
+                self.queue.drain(idx..=idx);
+            } else {
+                panic!("Run out of BlockCache!");
+            }
+        }
+        let block = Arc::new(Mutex::new(BlockCache::new(
+            block_id,
+            Arc::clone(&block_device),
+        )));
+        self.queue.push_back((block_id, Arc::clone(&block)));
+        block
+    }
+}
+
+lazy_static! {
+    pub static ref BLOCK_CACHE_MANAGER: Mutex<BlockCacheManager> =
+        Mutex::new(BlockCacheManager::new());
+}
+
+/// 给其他模块进行调用的获取块的接口
+pub fn get_block_cache(
+    block_id: usize,
+    block_device: Arc<dyn BlockDevice>,
+) -> Arc<Mutex<BlockCache>> {
+    BLOCK_CACHE_MANAGER
+        .lock()
+        .get_block_cache(block_id, block_device)
 }
